@@ -49,9 +49,40 @@ public class Lexer implements ILexer {
 						int startPos = currentPosition;
 						switch(currentChar){
 							case ' ', '\t', '\r'->{currentPosition++;}
+							case ','->{currentPosition++;
+								return new Token(Kind.COMMA,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
+							}
+							case ';'->{currentPosition++;
+								return new Token(Kind.SEMI,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
+							}
+							case '?'->{currentPosition++;
+								return new Token(Kind.QUESTION,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
+							}
+							case '('->{currentPosition++;
+								return new Token(Kind.LPAREN,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
+							}
+							case ')'->{currentPosition++;
+								return new Token(Kind.RPAREN,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
+							}
+							case '!'->{currentPosition++;
+								return new Token(Kind.BANG,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
+							}
 							case '+'->{currentPosition++;
 								return new Token(Kind.PLUS,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 								}
+							case '-'->{currentPosition++;
+								return new Token(Kind.MINUS,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
+							}
+							case '/'->{currentPosition++;
+								return new Token(Kind.DIV,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
+							}
+							case '%'->{currentPosition++;
+								return new Token(Kind.MOD,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
+							}
+							case '^'->{currentPosition++;
+								return new Token(Kind.RETURN,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
+							}
+
 							case '='->{state = State.HAVE_EQ; currentPosition++;}
 							case 0 ->{return new Token(Kind.EOF, 0, 0, chars, new SourceLocation(currentLine, currentColumn));}
 					}
@@ -62,6 +93,15 @@ public class Lexer implements ILexer {
 					case IN_FLOAT:
 					case IN_NUM:
 					case HAVE_EQ:
+						switch (currentChar) {
+							case '=' -> {
+								new Token(Kind.EQ, currentPosition, 2, chars, new SourceLocation(currentLine, currentColumn));
+								currentPosition++;
+							}
+							default -> {
+
+							}
+						}
 					case HAVE_MINUS:
 					default: throw new IllegalStateException("Lexer bug");
 				}
