@@ -217,6 +217,14 @@ class LexerTest {
 		ILexer lexer = ComponentFactory.makeLexer(input);
 		checkEOF(lexer.next());
 	}
+
+	@Test
+	void test21() throws LexicalException {
+		String input = " ";
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		//checkToken(PLUS, lexer.next());
+		checkEOF(lexer.next());
+	}
 	
 	@Test
 	void test1() throws LexicalException {
