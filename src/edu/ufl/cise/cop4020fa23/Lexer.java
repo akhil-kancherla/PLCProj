@@ -46,12 +46,12 @@ public class Lexer implements ILexer {
 				switch(state){
 
 					case START:
-						int firstPositionOfToken = currentPosition;
+						int startPos = currentPosition;
 						switch(currentChar){
 							case ' ', '\t', '\r'->{currentPosition++;}
-							case '+'->{
-								new Token(Kind.PLUS,firstPositionOfToken,1, chars ,new SourceLocation(currentLine, currentColumn));
-								currentPosition++;}
+							case '+'->{currentPosition++;
+								return new Token(Kind.PLUS,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
+								}
 							case '='->{state = State.HAVE_EQ; currentPosition++;}
 							case 0 ->{return new Token(Kind.EOF, 0, 0, chars, new SourceLocation(currentLine, currentColumn));}
 					}
@@ -66,6 +66,7 @@ public class Lexer implements ILexer {
 					default: throw new IllegalStateException("Lexer bug");
 				}
 		}
+
 
 		return new Token(Kind.EOF, 0, 0, new char[0], new SourceLocation(currentLine, currentColumn));
 
