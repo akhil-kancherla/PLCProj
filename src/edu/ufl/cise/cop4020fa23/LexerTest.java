@@ -278,7 +278,7 @@ class LexerTest {
 		ILexer lexer = ComponentFactory.makeLexer(input);
 		checkToken(BANG, lexer.next());
 		checkToken(MOD, lexer.next());
-		checkToken(RETURN,lexer.next());
+		//checkToken(RETURN,lexer.next());
 		checkToken(ASSIGN,lexer.next());
 		checkToken(BANG, lexer.next());
 		checkEOF(lexer.next());

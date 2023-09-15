@@ -83,7 +83,7 @@ public class Lexer implements ILexer {
 								return new Token(Kind.RETURN,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 							}
 
-							case '='->{state = State.HAVE_EQ; currentPosition++; }
+							case '='->{state = State.HAVE_EQ;}
 							case 0 ->{return new Token(Kind.EOF, 0, 0, chars, new SourceLocation(currentLine, currentColumn));}
 					}
 					break;
@@ -95,12 +95,19 @@ public class Lexer implements ILexer {
 					case HAVE_EQ:
 						switch (currentChar) {
 							case '=' -> {
-								currentPosition++;
-								return new Token(Kind.EQ, currentPosition, 2, chars, new SourceLocation(currentLine, currentColumn));
+								if (chars[currentPosition+1] =='='){
+									currentPosition += 2;
+									state = State.START;
+									return new Token(Kind.EQ, currentPosition, 2, chars, new SourceLocation(currentLine, currentColumn));
+
+								} else {
+									currentPosition += 1;
+									state = State.START;
+									return new Token(Kind.ASSIGN, currentPosition, 1, chars, new SourceLocation(currentLine, currentColumn));
+								}
 							}
 
 							default -> {
-
 								return new Token(Kind.ASSIGN, currentPosition, 1, chars, new SourceLocation(currentLine, currentColumn));
 							}
 						}
