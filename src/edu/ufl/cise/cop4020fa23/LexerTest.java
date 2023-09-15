@@ -255,6 +255,34 @@ class LexerTest {
 		checkToken(RETURN, lexer.next());
 		checkEOF(lexer.next());
 	}
+	@Test
+	void testEqualEqual() throws LexicalException {
+		String input = "==";
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkToken(EQ, lexer.next());
+		checkEOF(lexer.next());
+	}
+	@Test
+	void testSingleEqual() throws LexicalException {
+		String input = "=";
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkToken(ASSIGN, lexer.next());
+		checkEOF(lexer.next());
+	}
+	@Test
+	void randomTest() throws LexicalException {
+		String input = """
+  		 !%=
+ 		 !
+ 		 """ ;
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkToken(BANG, lexer.next());
+		checkToken(MOD, lexer.next());
+		checkToken(RETURN,lexer.next());
+		checkToken(ASSIGN,lexer.next());
+		checkToken(BANG, lexer.next());
+		checkEOF(lexer.next());
+	}
 	
 	@Test
 	void test1() throws LexicalException {
@@ -357,7 +385,23 @@ class LexerTest {
 		checkToken(GT, lexer.next());
 		checkEOF(lexer.next());
 	}
-	
+	@Test
+	void randomTest2() throws LexicalException {
+		String input = """
+				+== = == === 
+				====
+				""";
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkToken(PLUS, lexer.next());
+		checkToken(EQ, lexer.next());
+		checkToken(ASSIGN, lexer.next());
+		checkToken(EQ, lexer.next());
+		checkToken(EQ, lexer.next());
+		checkToken(ASSIGN, lexer.next());
+		checkToken(EQ, lexer.next());
+		checkToken(EQ, lexer.next());
+		checkEOF(lexer.next());
+	}
 	@Test
 	void test8() throws LexicalException {
 		String input = """
