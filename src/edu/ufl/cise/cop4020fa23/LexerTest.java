@@ -178,10 +178,10 @@ class LexerTest {
 
 	@Test
 	void testPlus() throws LexicalException {
-		String input = "BLACK []";
+		String input = "BLACK TRUE";
 		ILexer lexer = ComponentFactory.makeLexer(input);
 		checkToken(CONST,"BLACK", lexer.next());
-		checkToken(BOX,lexer.next());
+		checkToken(BOOLEAN_LIT,lexer.next());
 		checkEOF(lexer.next());
 	}
 

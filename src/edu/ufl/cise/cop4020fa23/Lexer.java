@@ -62,6 +62,8 @@ public class Lexer implements ILexer {
 		keywords.put("RED", CONST);
 		keywords.put("WHITE", CONST);
 		keywords.put("YELLOW", CONST);
+		keywords.put("TRUE", BOOLEAN_LIT);
+		keywords.put("FALSE", BOOLEAN_LIT);
 	}
 
 
