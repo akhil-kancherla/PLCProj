@@ -178,9 +178,10 @@ class LexerTest {
 
 	@Test
 	void testPlus() throws LexicalException {
-		String input = "+";
+		String input = "abc BLACK";
 		ILexer lexer = ComponentFactory.makeLexer(input);
-		checkToken(PLUS, lexer.next());
+		checkToken(IDENT,"abc",lexer.next());
+		checkToken(CONST,"BLACK", lexer.next());
 		checkEOF(lexer.next());
 	}
 

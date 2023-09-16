@@ -11,6 +11,10 @@ package edu.ufl.cise.cop4020fa23;
 
 import edu.ufl.cise.cop4020fa23.exceptions.LexicalException;
 
+import java.sql.SQLOutput;
+import java.util.HashMap;
+import java.util.Map;
+
 import static edu.ufl.cise.cop4020fa23.Kind.*;
 
 
@@ -27,6 +31,40 @@ public class Lexer implements ILexer {
 		IN_FLOAT, IN_NUM, HAVE_EQ, HAVE_MINUS
 	}
 	private State state = State.START;
+	private static final Map<String, Kind> keywords = new HashMap<>();
+	static {
+		keywords.put("image",    RES_image);
+		keywords.put("pixel",  RES_pixel);
+		keywords.put("int",   RES_int);
+		keywords.put("string",  RES_string);
+		keywords.put("void",    RES_void);
+		keywords.put("boolean",    RES_boolean);
+		keywords.put("write",     RES_write);
+		keywords.put("height",    RES_height);
+		keywords.put("width",     RES_width);
+		keywords.put("if",  RES_if);
+		keywords.put("fi", RES_fi);
+		keywords.put("do",  RES_do);
+		keywords.put("od",   RES_od);
+		keywords.put("red",   RES_red);
+		keywords.put("green",    RES_green);
+		keywords.put("blue",  RES_blue);
+		keywords.put("Z", CONST);
+		keywords.put("BLACK", CONST);
+		keywords.put("BLUE", CONST);
+		keywords.put("CYAN", CONST);
+		keywords.put("DARK_GRAY", CONST);
+		keywords.put("GRAY", CONST);
+		keywords.put("GREEN", CONST);
+		keywords.put("LIGHT_GRAY", CONST);
+		keywords.put("MAGENTA", CONST);
+		keywords.put("ORANGE", CONST);
+		keywords.put("PINK", CONST);
+		keywords.put("RED", CONST);
+		keywords.put("WHITE", CONST);
+		keywords.put("YELLOW", CONST);
+	}
+
 
 
 
@@ -109,6 +147,11 @@ public class Lexer implements ILexer {
 						currentPosition++;
 						while (Character.isLetter(chars[currentPosition])|| chars[currentPosition] == '_'){
 							currentPosition++;
+						}
+						if (keywords.containsKey(input.substring(startPos, (currentPosition)))){
+							state = State.START;
+							Kind val = keywords.get(input.substring(startPos, (currentPosition)));
+							return new Token(val, startPos, (currentPosition)-(startPos), chars, new SourceLocation(currentLine, currentColumn));
 						}
 						state = State.START;
 						return new Token(IDENT, startPos, currentPosition-startPos, chars, new SourceLocation(currentLine, currentColumn));
