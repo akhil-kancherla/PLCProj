@@ -11,7 +11,6 @@ package edu.ufl.cise.cop4020fa23;
 
 import edu.ufl.cise.cop4020fa23.exceptions.LexicalException;
 
-import java.sql.SQLOutput;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -109,8 +108,14 @@ public class Lexer implements ILexer {
 							case '+'->{currentPosition++;
 								return new Token(Kind.PLUS,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 								}
-							case '-'->{currentPosition++;
-								return new Token(Kind.MINUS,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
+
+							case '-'->{
+								if((chars[currentPosition+1] == '>')) {
+									currentPosition += 2;
+									return new Token(RARROW, startPos, 2, chars, new SourceLocation(currentLine, currentColumn));
+								}
+								currentPosition++;
+								return new Token(MINUS,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 							}
 							case '/'->{currentPosition++;
 								return new Token(Kind.DIV,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
@@ -121,9 +126,85 @@ public class Lexer implements ILexer {
 							case '^'->{currentPosition++;
 								return new Token(Kind.RETURN,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 							}
+							case '&'->{
+								if((chars[currentPosition+1] == '&')){
+									currentPosition+=2;
+									return new Token(AND,startPos,2, chars, new SourceLocation(currentLine, currentColumn));
+								}
+								currentPosition++;
+								return new Token(BITAND,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
+							}
+							case '*'->{
+								if((chars[currentPosition+1] == '*')){
+									currentPosition+=2;
+									return new Token(Kind.EXP,startPos,2, chars, new SourceLocation(currentLine, currentColumn));
+								}
+									currentPosition++;
+								return new Token(Kind.TIMES,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
+							}
+
+							case '|'-> {
+								if((chars[currentPosition+1] == '|')){
+									currentPosition+=2;
+									return new Token(OR,startPos,2, chars, new SourceLocation(currentLine, currentColumn));
+								}
+								currentPosition++;
+								return new Token(Kind.BITOR,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
+							}
+
+							case '<'-> {
+								if((chars[currentPosition+1] == '=')){
+									currentPosition+=2;
+									return new Token(LE,startPos,2, chars, new SourceLocation(currentLine, currentColumn));
+								} else if ((chars[currentPosition+1] == ':')){
+									currentPosition+=2;
+									return new Token(BLOCK_OPEN,startPos,2, chars, new SourceLocation(currentLine, currentColumn));
+								}
+								currentPosition++;
+								return new Token(Kind.LT,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
+							}
+
+							case '>'->{
+								if((chars[currentPosition+1] == '=')) {
+									currentPosition += 2;
+									return new Token(GE, startPos, 2, chars, new SourceLocation(currentLine, currentColumn));
+								}
+								currentPosition++;
+								return new Token(Kind.GT,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
+							}
+
+							case ':'->{
+								if((chars[currentPosition+1] == '>')) {
+									currentPosition += 2;
+									return new Token(BLOCK_CLOSE, startPos, 2, chars, new SourceLocation(currentLine, currentColumn));
+								}
+								currentPosition++;
+								return new Token(Kind.COLON,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
+							}
+
+							case '['-> {
+								if((chars[currentPosition+1] == ']')){
+									currentPosition+=2;
+									return new Token(BOX,startPos,2, chars, new SourceLocation(currentLine, currentColumn));
+								}
+								currentPosition++;
+								return new Token(LSQUARE,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
+							}
+
+							case ']'-> {
+								currentPosition++;
+								return new Token(RSQUARE,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
+							}
+
+//							case '#'-> {
+//								if((chars[currentPosition+1] == '#')){
+//
+//									state = State.START;
+//								}
+//							}
 
 							case '='->{state = State.HAVE_EQ;}
-//
+
 							//case 0 ->{return new Token(Kind.EOF, 0, 0, new char[0], new SourceLocation(currentLine, currentColumn));}
 
 							default ->{
