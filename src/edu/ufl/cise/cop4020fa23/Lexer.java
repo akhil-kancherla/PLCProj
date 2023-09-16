@@ -9,10 +9,9 @@
 */
 package edu.ufl.cise.cop4020fa23;
 
-import static edu.ufl.cise.cop4020fa23.Kind.EOF;
-import static edu.ufl.cise.cop4020fa23.Kind.PLUS;
-
 import edu.ufl.cise.cop4020fa23.exceptions.LexicalException;
+
+import static edu.ufl.cise.cop4020fa23.Kind.*;
 
 
 public class Lexer implements ILexer {
@@ -22,11 +21,13 @@ public class Lexer implements ILexer {
 	private int currentLine = 1;
 	private int currentColumn = 1;
 	private char[] chars;
+	private int startPos;
 	private enum State {
 		START, IN_IDENT, HAVE_ZERO, HAVE_DOT,
 		IN_FLOAT, IN_NUM, HAVE_EQ, HAVE_MINUS
 	}
 	private State state = State.START;
+
 
 
 
@@ -46,7 +47,7 @@ public class Lexer implements ILexer {
 				switch(state){
 
 					case START:
-						int startPos = currentPosition;
+						startPos = currentPosition;
 						switch(currentChar){
 							case ' ', '\t', '\r', '\n' ->{currentPosition++;}
 							case ','->{currentPosition++;
@@ -84,14 +85,45 @@ public class Lexer implements ILexer {
 							}
 
 							case '='->{state = State.HAVE_EQ;}
-							case 0 ->{return new Token(Kind.EOF, 0, 0, chars, new SourceLocation(currentLine, currentColumn));}
+//
+							//case 0 ->{return new Token(Kind.EOF, 0, 0, new char[0], new SourceLocation(currentLine, currentColumn));}
+
+							default ->{
+								//return new Token(Kind.EOF, 0, 0, chars, new SourceLocation(currentLine, currentColumn));
+								if(Character.isLetter(currentChar) || currentChar == '_'){
+									state = State.IN_IDENT;
+								} else if (Character.isDigit(currentChar)){
+									if (currentChar == '0'){
+										state = State.START;
+										currentPosition++;
+										return new Token(NUM_LIT, startPos, 1, chars, new SourceLocation(currentLine, currentColumn));
+									}
+									state = State.IN_NUM;
+								}
+							}
+
+
 					}
 					break;
 					case IN_IDENT:
+						currentPosition++;
+						while (Character.isLetter(chars[currentPosition])|| chars[currentPosition] == '_'){
+							currentPosition++;
+						}
+						state = State.START;
+						return new Token(IDENT, startPos, currentPosition-startPos, chars, new SourceLocation(currentLine, currentColumn));
+
 					case HAVE_ZERO:
 					case HAVE_DOT:
 					case IN_FLOAT:
 					case IN_NUM:
+						currentPosition++;
+						while (Character.isDigit(chars[currentPosition])){
+							currentPosition++;
+						}
+						state = State.START;
+						return new Token(NUM_LIT, startPos, currentPosition-startPos, chars, new SourceLocation(currentLine, currentColumn));
+
 					case HAVE_EQ:
 						switch (currentChar) {
 							case '=' -> {
@@ -120,8 +152,5 @@ public class Lexer implements ILexer {
 		return new Token(Kind.EOF, 0, 0, new char[0], new SourceLocation(currentLine, currentColumn));
 
 	}
-
-
-
 
 }

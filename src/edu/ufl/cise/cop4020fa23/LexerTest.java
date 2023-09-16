@@ -432,6 +432,16 @@ class LexerTest {
 		checkToken(CONST,"RED", lexer.next());
 		checkEOF(lexer.next());
 	}
+
+	@Test
+	void letterA() throws LexicalException {
+		String input = "abc ab";
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		//checkToken(EQ, lexer.next());
+		checkToken(IDENT,"abc",lexer.next());
+		checkToken(IDENT,"ab",lexer.next());
+		checkEOF(lexer.next());
+	}
 	
 //	@Test
 //	void test9() throws LexicalException {
@@ -583,6 +593,14 @@ class LexerTest {
 		});
 		show("Error message from test17: " + e.getMessage());
     }
+
+	@Test
+	void num1() throws Exception {
+		String input = "1";
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkNumLit("1",lexer.next());
+
+	}
     
     //throws exception
     @Test
