@@ -22,12 +22,12 @@ public class Lexer implements ILexer {
 	String input;
 	private int currentPosition = 0;
 	private int currentLine = 1;
-	private int currentColumn = 1;
+	private int currentColumn = 0;
 	private char[] chars;
 	private int startPos;
 	private enum State {
-		START, IN_IDENT, HAVE_ZERO, HAVE_DOT,
-		IN_FLOAT, IN_NUM, HAVE_EQ, HAVE_MINUS
+		START, IN_IDENT, HAVE_STRING_LIT, HAVE_DOT
+		, IN_NUM, HAVE_EQ, HAVE_MINUS
 	}
 	private State state = State.START;
 	private static final Map<String, Kind> keywords = new HashMap<>();
@@ -88,138 +88,181 @@ public class Lexer implements ILexer {
 					case START:
 						startPos = currentPosition;
 						switch(currentChar){
-							case ' ', '\t', '\r', '\n' ->{currentPosition++;}
-							case ','->{currentPosition++;
+							case ' ', '\t', '\r', '\n' ->{
+								currentPosition++;
+								currentColumn++;
+								if (currentChar == '\n'){
+									currentLine++;
+									currentColumn = 0;
+								}
+							}
+							case ','->{currentPosition++;currentColumn++;
 								return new Token(Kind.COMMA,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 							}
-							case ';'->{currentPosition++;
+							case ';'->{currentPosition++;currentColumn++;
 								return new Token(Kind.SEMI,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 							}
-							case '?'->{currentPosition++;
+							case '?'->{currentPosition++;currentColumn++;
 								return new Token(Kind.QUESTION,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 							}
-							case '('->{currentPosition++;
+							case '('->{currentPosition++;currentColumn++;
 								return new Token(Kind.LPAREN,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 							}
-							case ')'->{currentPosition++;
+							case ')'->{currentPosition++;currentColumn++;
 								return new Token(Kind.RPAREN,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 							}
-							case '!'->{currentPosition++;
+							case '!'->{currentPosition++;currentColumn++;
 								return new Token(Kind.BANG,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 							}
-							case '+'->{currentPosition++;
+							case '+'->{currentPosition++;currentColumn++;
 								return new Token(Kind.PLUS,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 								}
 
 							case '-'->{
 								if((chars[currentPosition+1] == '>')) {
 									currentPosition += 2;
-									return new Token(RARROW, startPos, 2, chars, new SourceLocation(currentLine, currentColumn));
+									currentColumn+=2;
+									return new Token(RARROW, startPos, 2, chars, new SourceLocation(currentLine, currentColumn-1));
 								}
 								currentPosition++;
+								currentColumn++;
 								return new Token(MINUS,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 							}
-							case '/'->{currentPosition++;
+							case '/'->{currentPosition++;currentColumn++;
 								return new Token(Kind.DIV,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 							}
-							case '%'->{currentPosition++;
+							case '%'->{currentPosition++;currentColumn++;
 								return new Token(Kind.MOD,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 							}
-							case '^'->{currentPosition++;
+							case '^'->{currentPosition++;currentColumn++;
 								return new Token(Kind.RETURN,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 							}
 							case '&'->{
 								if((chars[currentPosition+1] == '&')){
 									currentPosition+=2;
-									return new Token(AND,startPos,2, chars, new SourceLocation(currentLine, currentColumn));
+									currentColumn+=2;
+									return new Token(AND,startPos,2, chars, new SourceLocation(currentLine, currentColumn-1));
 								}
 								currentPosition++;
+								currentColumn++;
 								return new Token(BITAND,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 							}
 							case '*'->{
 								if((chars[currentPosition+1] == '*')){
 									currentPosition+=2;
-									return new Token(Kind.EXP,startPos,2, chars, new SourceLocation(currentLine, currentColumn));
+									currentColumn+=2;
+									return new Token(Kind.EXP,startPos,2, chars, new SourceLocation(currentLine, currentColumn-1));
 								}
-									currentPosition++;
+								currentPosition++;
+								currentColumn++;
 								return new Token(Kind.TIMES,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 							}
 
 							case '|'-> {
 								if((chars[currentPosition+1] == '|')){
 									currentPosition+=2;
-									return new Token(OR,startPos,2, chars, new SourceLocation(currentLine, currentColumn));
+									currentColumn+=2;
+									return new Token(OR,startPos,2, chars, new SourceLocation(currentLine, currentColumn-1));
 								}
 								currentPosition++;
+								currentColumn++;
 								return new Token(Kind.BITOR,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 							}
 
 							case '<'-> {
 								if((chars[currentPosition+1] == '=')){
 									currentPosition+=2;
-									return new Token(LE,startPos,2, chars, new SourceLocation(currentLine, currentColumn));
+									currentColumn+=2;
+									return new Token(LE,startPos,2, chars, new SourceLocation(currentLine, currentColumn-1));
 								} else if ((chars[currentPosition+1] == ':')){
 									currentPosition+=2;
-									return new Token(BLOCK_OPEN,startPos,2, chars, new SourceLocation(currentLine, currentColumn));
+									currentColumn+=2;
+									return new Token(BLOCK_OPEN,startPos,2, chars, new SourceLocation(currentLine, currentColumn-1));
 								}
 								currentPosition++;
+								currentColumn++;
 								return new Token(Kind.LT,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 							}
 
 							case '>'->{
 								if((chars[currentPosition+1] == '=')) {
 									currentPosition += 2;
-									return new Token(GE, startPos, 2, chars, new SourceLocation(currentLine, currentColumn));
+									currentColumn+=2;
+									return new Token(GE, startPos, 2, chars, new SourceLocation(currentLine, currentColumn-1));
 								}
 								currentPosition++;
+								currentColumn++;
 								return new Token(Kind.GT,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 							}
 
 							case ':'->{
 								if((chars[currentPosition+1] == '>')) {
 									currentPosition += 2;
-									return new Token(BLOCK_CLOSE, startPos, 2, chars, new SourceLocation(currentLine, currentColumn));
+									currentColumn+=2;
+									return new Token(BLOCK_CLOSE, startPos, 2, chars, new SourceLocation(currentLine, currentColumn-1));
 								}
 								currentPosition++;
+								currentColumn++;
 								return new Token(Kind.COLON,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 							}
 
 							case '['-> {
 								if((chars[currentPosition+1] == ']')){
 									currentPosition+=2;
-									return new Token(BOX,startPos,2, chars, new SourceLocation(currentLine, currentColumn));
+									currentColumn+=2;
+									return new Token(BOX,startPos,2, chars, new SourceLocation(currentLine, currentColumn-1));
 								}
 								currentPosition++;
+								currentColumn++;
 								return new Token(LSQUARE,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 							}
 
 							case ']'-> {
 								currentPosition++;
+								currentColumn++;
 								return new Token(RSQUARE,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
 							}
 
-//							case '#'-> {
-//								if((chars[currentPosition+1] == '#')){
-//
-//									state = State.START;
-//								}
-//							}
+							case '#'-> {
+								if((chars[currentPosition+1] == '#')){
+									//currentPosition+=2;
+									while (chars[currentPosition] != '\n' && chars[currentPosition] != '\r' && chars[currentPosition] != '\t'){
+										currentPosition++;
+										currentColumn++;
+									}
+									//currentLine++;
+									state = State.START;
+								} else {
+									throw new LexicalException("Singular # is not accepted");
+								}
+							}
 
-							case '='->{state = State.HAVE_EQ;}
-
-							//case 0 ->{return new Token(Kind.EOF, 0, 0, new char[0], new SourceLocation(currentLine, currentColumn));}
+							case '='->{
+								if((chars[currentPosition+1] == '=')) {
+									currentPosition += 2;
+									currentColumn+=2;
+									return new Token(EQ, startPos, 2, chars, new SourceLocation(currentLine, currentColumn-1));
+								}
+								currentPosition++;
+								currentColumn++;
+								return new Token(ASSIGN,startPos,1, chars, new SourceLocation(currentLine, currentColumn));
+							}
 
 							default ->{
-								//return new Token(Kind.EOF, 0, 0, chars, new SourceLocation(currentLine, currentColumn));
 								if(Character.isLetter(currentChar) || currentChar == '_'){
 									state = State.IN_IDENT;
 								} else if (Character.isDigit(currentChar)){
 									if (currentChar == '0'){
 										state = State.START;
 										currentPosition++;
+										currentColumn++;
 										return new Token(NUM_LIT, startPos, 1, chars, new SourceLocation(currentLine, currentColumn));
 									}
 									state = State.IN_NUM;
+								} else if (currentChar == '"'){
+									state = State.HAVE_STRING_LIT;
+								} else {
+									throw new LexicalException("Unrecognized token");
 								}
 							}
 
@@ -228,8 +271,9 @@ public class Lexer implements ILexer {
 					break;
 					case IN_IDENT:
 						currentPosition++;
-						while (Character.isLetter(chars[currentPosition])|| chars[currentPosition] == '_'){
+						while (Character.isLetter(chars[currentPosition])|| Character.isDigit(chars[currentPosition])|| chars[currentPosition] == '_'){
 							currentPosition++;
+							currentColumn++;
 						}
 						if (keywords.containsKey(input.substring(startPos, (currentPosition)))){
 							state = State.START;
@@ -239,36 +283,42 @@ public class Lexer implements ILexer {
 						state = State.START;
 						return new Token(IDENT, startPos, currentPosition-startPos, chars, new SourceLocation(currentLine, currentColumn));
 
-					case HAVE_ZERO:
+					case HAVE_STRING_LIT:
+						currentPosition++;
+						while (chars[currentPosition]>=32 && chars[currentPosition]<=126){
+							currentPosition++;
+							currentColumn++;
+						}
+						state = State.START;
+						return new Token(STRING_LIT, startPos, (currentPosition)-(startPos), chars, new SourceLocation(currentLine, currentColumn));
+
+
 					case HAVE_DOT:
-					case IN_FLOAT:
 					case IN_NUM:
 						currentPosition++;
 						while (Character.isDigit(chars[currentPosition])){
 							currentPosition++;
+							currentColumn++;
 						}
 						state = State.START;
-						return new Token(NUM_LIT, startPos, currentPosition-startPos, chars, new SourceLocation(currentLine, currentColumn));
+						String numLiteral = input.substring(startPos,currentPosition);
+
+						try {
+							int numValue = Integer.parseInt(numLiteral);
+							// Check if the parsed integer is within the valid range
+							if (numValue < Integer.MAX_VALUE) {
+								state = State.START;
+								return new Token(Kind.NUM_LIT, startPos, currentPosition - startPos, chars, new SourceLocation(currentLine, currentColumn));
+							} else {
+								// The parsed integer is out of range
+								throw new LexicalException("Numeric literal is out of range");
+							}
+						} catch (NumberFormatException e) {
+							// Parsing failed, rethrow as LexicalException
+							throw new LexicalException("Invalid numeric literal");
+						}
 
 					case HAVE_EQ:
-						switch (currentChar) {
-							case '=' -> {
-								if (chars[currentPosition+1] =='='){
-									currentPosition += 2;
-									state = State.START;
-									return new Token(Kind.EQ, currentPosition, 2, chars, new SourceLocation(currentLine, currentColumn));
-
-								} else {
-									currentPosition += 1;
-									state = State.START;
-									return new Token(Kind.ASSIGN, currentPosition, 1, chars, new SourceLocation(currentLine, currentColumn));
-								}
-							}
-
-							default -> {
-								return new Token(Kind.ASSIGN, currentPosition, 1, chars, new SourceLocation(currentLine, currentColumn));
-							}
-						}
 					case HAVE_MINUS:
 					default: throw new IllegalStateException("Lexer bug");
 				}
