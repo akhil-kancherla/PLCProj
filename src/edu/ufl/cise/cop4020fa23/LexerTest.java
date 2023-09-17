@@ -513,18 +513,18 @@ class LexerTest {
 		checkIdent("true", lexer.next());
 	}
 
-//	@Test
-//	void test28() throws Exception {
-//		String input = """
-//         "RED"Redred
-//         REDred red
-//         """;
-//		ILexer lexer = ComponentFactory.makeLexer(input);
-//		checkString("RED", lexer.next()); // checkString instead of checkToken as given tests (ex. test 12) show
-//		checkIdent("Redred",lexer.next()); // previous version had REDred check twice, although that does not match the input
-//		checkIdent("REDred",lexer.next());
-//		checkToken(RES_red, "red", lexer.next()); // red is not a CONST, although RED is
-//	}
+	@Test
+	void test28() throws Exception {
+		String input = """
+         "RED"Redred
+         REDred red
+         """;
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkString("RED", lexer.next()); // checkString instead of checkToken as given tests (ex. test 12) show
+		checkIdent("Redred",lexer.next()); // previous version had REDred check twice, although that does not match the input
+		checkIdent("REDred",lexer.next());
+		checkToken(RES_red, "red", lexer.next()); // red is not a CONST, although RED is
+	}
 
 	@Test
 	void unitTestEOF() throws LexicalException {
@@ -790,6 +790,24 @@ class LexerTest {
 		checkString("", lexer.next());
 	}
 
+	@Test
+	void unitTestMultiLineString() {
+		String input = "\"value\n\"";
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		LexicalException e = assertThrows(LexicalException.class, () -> lexer.next());
+		show("Error message from unitTestMultiLineString: " + e.getMessage());
+	}
+
+
+	@Test
+	void unitTestInvalidString() {
+		String input = "\"31";
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		LexicalException e = assertThrows(LexicalException.class, () -> lexer.next());
+		show("Error message from unitTestInvalidString: " + e.getMessage());
+	}
+
+
 
 
 
@@ -802,6 +820,69 @@ class LexerTest {
 	}
 
 
+	@Test
+	void test21() throws Exception {
+		String input = """
+         "
+         a
+         a
+         "
+         """;
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		LexicalException e = assertThrows(LexicalException.class, () -> {
+			lexer.next();
+		});
+		show("Error message from test 21: " + e.getMessage());
+	}
+
+	@Test
+	void test29() throws Exception {
+		String input = """
+    			"asdjhfb"12389123 123/
+    			12[]*&&%AB1290080_
+    			""";
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkString("asdjhfb", lexer.next());
+		checkNumLit("12389123", lexer.next());
+		checkNumLit("123", lexer.next());
+		checkToken(DIV, lexer.next());
+		checkNumLit("12", lexer.next());
+		checkToken(BOX, lexer.next());
+		checkToken(TIMES, lexer.next());
+		checkToken(AND, lexer.next());
+		checkToken(MOD, lexer.next());
+		checkIdent("AB1290080_",lexer.next());
+	}
+
+	@Test
+	void test27() throws Exception {
+		String input = """
+    			FALSETRUE
+    			Truefalse TRUE
+    			""";
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkIdent("FALSETRUE",lexer.next());
+		checkIdent("Truefalse",lexer.next());
+		checkToken(BOOLEAN_LIT, "TRUE", lexer.next());
+	}
+
+
+	@Test
+	void test22() throws Exception {
+		String input = """
+         "this"
+          "test"
+           "case"
+            "should*($)%*)"
+         """;
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		//quotes escaped because quotation marks must be stored
+		checkToken(STRING_LIT,"\"this\"", 1, 1, lexer.next());
+		checkToken(STRING_LIT,"\"test\"", 2, 2, lexer.next());
+		checkToken(STRING_LIT,"\"case\"", 3, 3, lexer.next());
+		checkToken(STRING_LIT,"\"should*($)%*)\"", 4, 4, lexer.next());
+		checkToken(EOF, lexer.next());
+	}
 }
 
 

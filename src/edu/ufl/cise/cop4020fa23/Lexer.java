@@ -259,7 +259,7 @@ public class Lexer implements ILexer {
 										return new Token(NUM_LIT, startPos, 1, chars, new SourceLocation(currentLine, currentColumn));
 									}
 									state = State.IN_NUM;
-								} else if (currentChar == '"'){
+								} else if (currentChar == '\"'){
 									state = State.HAVE_STRING_LIT;
 								} else {
 									throw new LexicalException("Unrecognized token");
@@ -284,14 +284,34 @@ public class Lexer implements ILexer {
 						return new Token(IDENT, startPos, currentPosition-startPos, chars, new SourceLocation(currentLine, currentColumn));
 
 					case HAVE_STRING_LIT:
-						currentPosition++;
-						while (chars[currentPosition]>=32 && chars[currentPosition]<=126){
-							currentPosition++;
-							currentColumn++;
+						currentPosition++; // Move past the opening double quotation mark
+						while (currentPosition < input.length()) {
+							if (chars[currentPosition] == '"') {
+								currentPosition++; // Move past the closing double quotation mark
+								state = State.START;
+								return new Token(STRING_LIT, startPos, (currentPosition) - (startPos), chars, new SourceLocation(currentLine, currentColumn));
+							} else if (chars[currentPosition] == '\n') {
+								// Handle newline character within an unterminated string
+								throw new LexicalException("Unterminated string literal");
+							} else if (chars[currentPosition] == '\\') {
+								// Handle escape sequences, such as \" or \\
+								currentPosition++;
+								currentColumn++;
+								char nextChar = chars[currentPosition];
+								if (nextChar == '\\' || nextChar == '"') {
+									currentPosition++;
+									currentColumn++;
+								} else {
+									throw new LexicalException("Invalid escape sequence in string literal");
+								}
+							} else {
+								currentPosition++;
+								currentColumn++;
+							}
 						}
-						state = State.START;
-						return new Token(STRING_LIT, startPos, (currentPosition)-(startPos), chars, new SourceLocation(currentLine, currentColumn));
 
+						// If the loop finishes without encountering the closing double quotation mark
+						throw new LexicalException("Unterminated string literal");
 
 					case HAVE_DOT:
 					case IN_NUM:
