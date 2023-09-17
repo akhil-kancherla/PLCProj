@@ -26,8 +26,8 @@ public class Lexer implements ILexer {
 	private char[] chars;
 	private int startPos;
 	private enum State {
-		START, IN_IDENT, HAVE_STRING_LIT, HAVE_DOT
-		, IN_NUM, HAVE_EQ, HAVE_MINUS
+		START, IN_IDENT, HAVE_STRING_LIT
+		, IN_NUM
 	}
 	private State state = State.START;
 	private static final Map<String, Kind> keywords = new HashMap<>();
