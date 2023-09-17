@@ -883,6 +883,24 @@ class LexerTest {
 		checkToken(STRING_LIT,"\"should*($)%*)\"", 4, 4, lexer.next());
 		checkToken(EOF, lexer.next());
 	}
+
+	@Test
+	void test26() throws Exception {
+		String input = """
+          \s\"strange\"
+         
+               \"positioning\"
+                
+                   blue
+                   """;
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkToken(STRING_LIT, "\"strange\"", 1, 2, lexer.next());
+		checkToken(STRING_LIT, "\"positioning\"", 3, 6, lexer.next());
+		checkToken(RES_blue, "blue", 5, 8, lexer.next());
+		checkToken(EOF, lexer.next());
+	}
+
+
 }
 
 

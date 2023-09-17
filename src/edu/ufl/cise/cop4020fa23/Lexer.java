@@ -271,25 +271,28 @@ public class Lexer implements ILexer {
 					break;
 					case IN_IDENT:
 						currentPosition++;
+						int identLength = 0;
 						while (Character.isLetter(chars[currentPosition])|| Character.isDigit(chars[currentPosition])|| chars[currentPosition] == '_'){
 							currentPosition++;
 							currentColumn++;
+							identLength++;
 						}
 						if (keywords.containsKey(input.substring(startPos, (currentPosition)))){
 							state = State.START;
 							Kind val = keywords.get(input.substring(startPos, (currentPosition)));
-							return new Token(val, startPos, (currentPosition)-(startPos), chars, new SourceLocation(currentLine, currentColumn));
+							return new Token(val, startPos, (currentPosition)-(startPos), chars, new SourceLocation(currentLine, currentColumn-identLength-1));
 						}
 						state = State.START;
-						return new Token(IDENT, startPos, currentPosition-startPos, chars, new SourceLocation(currentLine, currentColumn));
+						return new Token(IDENT, startPos, currentPosition-startPos, chars, new SourceLocation(currentLine, currentColumn-identLength-1));
 
 					case HAVE_STRING_LIT:
 						currentPosition++; // Move past the opening double quotation mark
+						int stringLength = 0;
 						while (currentPosition < input.length()) {
 							if (chars[currentPosition] == '"') {
 								currentPosition++; // Move past the closing double quotation mark
 								state = State.START;
-								return new Token(STRING_LIT, startPos, (currentPosition) - (startPos), chars, new SourceLocation(currentLine, currentColumn));
+								return new Token(STRING_LIT, startPos, (currentPosition) - (startPos), chars, new SourceLocation(currentLine, currentColumn-stringLength+1));
 							} else if (chars[currentPosition] == '\n') {
 								// Handle newline character within an unterminated string
 								throw new LexicalException("Unterminated string literal");
@@ -301,19 +304,20 @@ public class Lexer implements ILexer {
 								if (nextChar == '\\' || nextChar == '"') {
 									currentPosition++;
 									currentColumn++;
+									stringLength += 2;
+
 								} else {
 									throw new LexicalException("Invalid escape sequence in string literal");
 								}
 							} else {
 								currentPosition++;
 								currentColumn++;
+								stringLength++;
 							}
 						}
 
 						// If the loop finishes without encountering the closing double quotation mark
 						throw new LexicalException("Unterminated string literal");
-
-					case HAVE_DOT:
 					case IN_NUM:
 						currentPosition++;
 						while (Character.isDigit(chars[currentPosition])){
@@ -337,9 +341,6 @@ public class Lexer implements ILexer {
 							// Parsing failed, rethrow as LexicalException
 							throw new LexicalException("Invalid numeric literal");
 						}
-
-					case HAVE_EQ:
-					case HAVE_MINUS:
 					default: throw new IllegalStateException("Lexer bug");
 				}
 		}
