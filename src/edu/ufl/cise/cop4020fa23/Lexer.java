@@ -271,6 +271,7 @@ public class Lexer implements ILexer {
 					break;
 					case IN_IDENT:
 						currentPosition++;
+						currentColumn++;
 						int identLength = 0;
 						while (Character.isLetter(chars[currentPosition])|| Character.isDigit(chars[currentPosition])|| chars[currentPosition] == '_'){
 							currentPosition++;
@@ -280,10 +281,10 @@ public class Lexer implements ILexer {
 						if (keywords.containsKey(input.substring(startPos, (currentPosition)))){
 							state = State.START;
 							Kind val = keywords.get(input.substring(startPos, (currentPosition)));
-							return new Token(val, startPos, (currentPosition)-(startPos), chars, new SourceLocation(currentLine, currentColumn-identLength-1));
+							return new Token(val, startPos, (currentPosition)-(startPos), chars, new SourceLocation(currentLine, currentColumn-identLength));
 						}
 						state = State.START;
-						return new Token(IDENT, startPos, currentPosition-startPos, chars, new SourceLocation(currentLine, currentColumn-identLength-1));
+						return new Token(IDENT, startPos, currentPosition-startPos, chars, new SourceLocation(currentLine, currentColumn-identLength));
 
 					case HAVE_STRING_LIT:
 						currentPosition++; // Move past the opening double quotation mark
@@ -320,19 +321,21 @@ public class Lexer implements ILexer {
 						throw new LexicalException("Unterminated string literal");
 					case IN_NUM:
 						currentPosition++;
+						currentColumn++;
 						while (Character.isDigit(chars[currentPosition])){
 							currentPosition++;
 							currentColumn++;
 						}
 						state = State.START;
 						String numLiteral = input.substring(startPos,currentPosition);
+						int length = numLiteral.length();
 
 						try {
 							int numValue = Integer.parseInt(numLiteral);
 							// Check if the parsed integer is within the valid range
 							if (numValue < Integer.MAX_VALUE) {
 								state = State.START;
-								return new Token(Kind.NUM_LIT, startPos, currentPosition - startPos, chars, new SourceLocation(currentLine, currentColumn));
+								return new Token(Kind.NUM_LIT, startPos, currentPosition - startPos, chars, new SourceLocation(currentLine, currentColumn-length+1));
 							} else {
 								// The parsed integer is out of range
 								throw new LexicalException("Numeric literal is out of range");
