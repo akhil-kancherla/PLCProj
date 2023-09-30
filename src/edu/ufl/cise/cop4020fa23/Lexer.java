@@ -224,17 +224,15 @@ public class Lexer implements ILexer {
 							}
 
 							case '#'-> {
-								if((chars[currentPosition+1] == '#')){
-									//currentPosition+=2;
-									while (chars[currentPosition] != '\n' && chars[currentPosition] != '\r' && chars[currentPosition] != '\t'){
+								if ((chars[currentPosition + 1] == '#')) {
+									while (currentPosition < input.length() && chars[currentPosition] != '\n' && chars[currentPosition] != '\r' && chars[currentPosition] != '\t') {
 										currentPosition++;
 										currentColumn++;
 									}
-									//currentLine++;
-									state = State.START;
 								} else {
 									throw new LexicalException("Singular # is not accepted");
 								}
+								break;
 							}
 
 							case '='->{
