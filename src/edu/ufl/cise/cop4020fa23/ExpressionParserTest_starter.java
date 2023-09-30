@@ -5,21 +5,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import edu.ufl.cise.cop4020fa23.ast.*;
 import org.junit.jupiter.api.Test;
 
-import edu.ufl.cise.cop4020fa23.ast.AST;
-import edu.ufl.cise.cop4020fa23.ast.BinaryExpr;
-import edu.ufl.cise.cop4020fa23.ast.BooleanLitExpr;
-import edu.ufl.cise.cop4020fa23.ast.ChannelSelector;
-import edu.ufl.cise.cop4020fa23.ast.ConditionalExpr;
-import edu.ufl.cise.cop4020fa23.ast.ConstExpr;
-import edu.ufl.cise.cop4020fa23.ast.Expr;
-import edu.ufl.cise.cop4020fa23.ast.IdentExpr;
-import edu.ufl.cise.cop4020fa23.ast.NumLitExpr;
-import edu.ufl.cise.cop4020fa23.ast.PixelSelector;
-import edu.ufl.cise.cop4020fa23.ast.PostfixExpr;
-import edu.ufl.cise.cop4020fa23.ast.StringLitExpr;
-import edu.ufl.cise.cop4020fa23.ast.UnaryExpr;
 import edu.ufl.cise.cop4020fa23.exceptions.LexicalException;
 import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
 import edu.ufl.cise.cop4020fa23.exceptions.SyntaxException;
@@ -578,5 +566,21 @@ class ExpressionParserTest_starter {
 		Expr unaryNegation = checkUnaryExpr(unaryWidth, Kind.MINUS).getExpr();
 		checkNumLitExpr(unaryNegation, 42);
 	}
+
+	@Test
+	void unitTestExpandedPixelExpression() throws PLCCompilerException {
+		String input = """
+         [1, 2, 3]
+         """;
+		AST ast = getAST(input);
+		assertThat("", ast, instanceOf(ExpandedPixelExpr.class));
+		Expr red = ((ExpandedPixelExpr) ast).getRed();
+		Expr green = ((ExpandedPixelExpr) ast).getGreen();
+		Expr blue = ((ExpandedPixelExpr) ast).getBlue();
+		checkNumLitExpr(red, 1);
+		checkNumLitExpr(green, 2);
+		checkNumLitExpr(blue, 3);
+	}
+
 
 }
