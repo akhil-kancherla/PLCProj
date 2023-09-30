@@ -243,6 +243,22 @@ public class ExpressionParser implements IParser {
 		return e;
 	}
 
+	private Expr expandedPixelExpr() throws PLCCompilerException {
+		if (currentToken.kind() == LSQUARE) {
+			IToken firstToken = currentToken; // Store the current token for later use
+			match(LSQUARE);
+			Expr redExpr = expr();
+			match(COMMA);
+			Expr greenExpr = expr();
+			match(COMMA);
+			Expr blueExpr = expr();
+			match(RSQUARE);
+			return new ExpandedPixelExpr(firstToken, redExpr, greenExpr, blueExpr);
+		} else {
+			throw new SyntaxException("Expected [ but found " + currentToken.kind());
+		}
+	}
+
 	private Expr primaryExpr() throws PLCCompilerException {
 		Expr e = null;
 		if (currentToken == null || currentToken.kind() == EOF) {
@@ -269,6 +285,9 @@ public class ExpressionParser implements IParser {
 			case CONST -> { // Assuming Z and MAGENTA are constants
 				e = new ConstExpr(currentToken);
 				match(CONST);
+			}
+			case LSQUARE -> {
+				e = expandedPixelExpr();
 			}
 			default -> throw new SyntaxException("Unexpected token: " + currentToken);
 		}
