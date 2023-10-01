@@ -9,41 +9,6 @@
  */
 package edu.ufl.cise.cop4020fa23;
 
-import static edu.ufl.cise.cop4020fa23.Kind.AND;
-import static edu.ufl.cise.cop4020fa23.Kind.BANG;
-import static edu.ufl.cise.cop4020fa23.Kind.BITAND;
-import static edu.ufl.cise.cop4020fa23.Kind.BITOR;
-import static edu.ufl.cise.cop4020fa23.Kind.COLON;
-import static edu.ufl.cise.cop4020fa23.Kind.COMMA;
-import static edu.ufl.cise.cop4020fa23.Kind.DIV;
-import static edu.ufl.cise.cop4020fa23.Kind.EOF;
-import static edu.ufl.cise.cop4020fa23.Kind.EQ;
-import static edu.ufl.cise.cop4020fa23.Kind.EXP;
-import static edu.ufl.cise.cop4020fa23.Kind.GE;
-import static edu.ufl.cise.cop4020fa23.Kind.GT;
-import static edu.ufl.cise.cop4020fa23.Kind.IDENT;
-import static edu.ufl.cise.cop4020fa23.Kind.LE;
-import static edu.ufl.cise.cop4020fa23.Kind.LPAREN;
-import static edu.ufl.cise.cop4020fa23.Kind.LSQUARE;
-import static edu.ufl.cise.cop4020fa23.Kind.LT;
-import static edu.ufl.cise.cop4020fa23.Kind.MINUS;
-import static edu.ufl.cise.cop4020fa23.Kind.MOD;
-import static edu.ufl.cise.cop4020fa23.Kind.NUM_LIT;
-import static edu.ufl.cise.cop4020fa23.Kind.OR;
-import static edu.ufl.cise.cop4020fa23.Kind.PLUS;
-import static edu.ufl.cise.cop4020fa23.Kind.QUESTION;
-import static edu.ufl.cise.cop4020fa23.Kind.RARROW;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_blue;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_green;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_height;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_red;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_width;
-import static edu.ufl.cise.cop4020fa23.Kind.RPAREN;
-import static edu.ufl.cise.cop4020fa23.Kind.RSQUARE;
-import static edu.ufl.cise.cop4020fa23.Kind.STRING_LIT;
-import static edu.ufl.cise.cop4020fa23.Kind.TIMES;
-import static edu.ufl.cise.cop4020fa23.Kind.CONST;
-
 import java.util.Arrays;
 
 import edu.ufl.cise.cop4020fa23.ast.AST;
@@ -63,8 +28,9 @@ import edu.ufl.cise.cop4020fa23.ast.UnaryExpr;
 import edu.ufl.cise.cop4020fa23.exceptions.LexicalException;
 import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
 import edu.ufl.cise.cop4020fa23.exceptions.SyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
+
+import static edu.ufl.cise.cop4020fa23.Kind.*;
+
 /**
  Expr::=  ConditionalExpr | LogicalOrExpr
  ConditionalExpr ::=  ?  Expr  :  Expr  :  Expr
@@ -82,11 +48,9 @@ import java.util.Arrays;
  PixelSelector  ::= [ Expr , Expr ]
  ExpandedPixel ::= [ Expr , Expr , Expr ]
  Dimension  ::=  [ Expr , Expr ]
-
  */
 
 public class ExpressionParser implements IParser {
-	private String input;
 	final ILexer tokens;
 	private IToken currentToken;
 
@@ -118,7 +82,7 @@ public class ExpressionParser implements IParser {
 
 	private Expr conditionalExpr() throws PLCCompilerException {
 		if (currentToken.kind() == QUESTION) {
-			IToken firstToken = currentToken; // Store the current token for later use
+			IToken firstToken = currentToken; 
 			match(QUESTION);
 			Expr guardExpr = expr();
 			match(RARROW);
@@ -133,8 +97,8 @@ public class ExpressionParser implements IParser {
 	private Expr logicalOrExpr() throws PLCCompilerException {
 		Expr e = logicalAndExpr();
 		while (currentToken.kind() == OR || currentToken.kind() == BITOR) {
-			IToken opToken = currentToken; // Store the current token before matching
-			match(currentToken.kind()); // Match the current operator
+			IToken opToken = currentToken;
+			match(currentToken.kind());
 			Expr e2 = logicalAndExpr();
 			e = new BinaryExpr(opToken, e, opToken, e2);
 		}
@@ -144,7 +108,7 @@ public class ExpressionParser implements IParser {
 	private Expr logicalAndExpr() throws PLCCompilerException {
 		Expr e = comparisonExpr();
 		while (currentToken.kind() == AND || currentToken.kind() == BITAND) {
-			IToken opToken = currentToken; // Store the current token before matching
+			IToken opToken = currentToken;
 			match(opToken.kind());
 			Expr e2 = comparisonExpr();
 			e = new BinaryExpr(opToken, e, opToken, e2);
@@ -155,7 +119,7 @@ public class ExpressionParser implements IParser {
 	private Expr comparisonExpr() throws PLCCompilerException {
 		Expr e = powExpr();
 		while (Arrays.asList(LT, GT, LE, GE, EQ).contains(currentToken.kind())) {
-			IToken opToken = currentToken; // Store the current token before matching
+			IToken opToken = currentToken;
 			match(opToken.kind());
 			Expr e2 = powExpr();
 			e = new BinaryExpr(opToken, e, opToken, e2);
@@ -166,7 +130,7 @@ public class ExpressionParser implements IParser {
 	private Expr powExpr() throws PLCCompilerException {
 		Expr e = additiveExpr();
 		if (currentToken.kind() == EXP) {
-			IToken opToken = currentToken; // Store the current token before matching
+			IToken opToken = currentToken;
 			match(EXP);
 			Expr e2 = powExpr();
 			e = new BinaryExpr(opToken, e, opToken, e2);
@@ -177,7 +141,7 @@ public class ExpressionParser implements IParser {
 	private Expr additiveExpr() throws PLCCompilerException {
 		Expr e = multiplicativeExpr();
 		while (currentToken.kind() == PLUS || currentToken.kind() == MINUS) {
-			IToken opToken = currentToken; // Store the current token before matching
+			IToken opToken = currentToken;
 			match(opToken.kind());
 			Expr e2 = multiplicativeExpr();
 			e = new BinaryExpr(opToken, e, opToken, e2);
@@ -188,7 +152,7 @@ public class ExpressionParser implements IParser {
 	private Expr multiplicativeExpr() throws PLCCompilerException {
 		Expr e = unaryExpr();
 		while (Arrays.asList(TIMES, DIV, MOD).contains(currentToken.kind())) {
-			IToken opToken = currentToken; // Store the current token before matching
+			IToken opToken = currentToken;
 			match(opToken.kind());
 			Expr e2 = unaryExpr();
 			e = new BinaryExpr(opToken, e, opToken, e2);
@@ -198,12 +162,12 @@ public class ExpressionParser implements IParser {
 
 	private Expr unaryExpr() throws PLCCompilerException {
 		if (Arrays.asList(BANG, MINUS).contains(currentToken.kind())) {
-			IToken opToken = currentToken; // Store the current token before matching
+			IToken opToken = currentToken;
 			match(opToken.kind());
 			Expr e = unaryExpr();
 			return new UnaryExpr(opToken, opToken, e);
 		} else if (Arrays.asList(RES_height, RES_width).contains(currentToken.kind())) {
-			IToken opToken = currentToken; // Store the current token before matching
+			IToken opToken = currentToken;
 			match(opToken.kind());
 			Expr e = unaryExpr();
 			return new UnaryExpr(opToken, opToken, e);
@@ -219,7 +183,7 @@ public class ExpressionParser implements IParser {
 		ChannelSelector channelSelector = null;
 
 		if (currentToken.kind() == LSQUARE) {
-			IToken firstTokenForPixelSelector = currentToken; // Store the current token before matching
+			IToken firstTokenForPixelSelector = currentToken;
 			match(LSQUARE);
 			Expr x = expr();
 			match(COMMA);
@@ -229,9 +193,9 @@ public class ExpressionParser implements IParser {
 		}
 
 		if (currentToken.kind() == COLON) {
-			IToken firstTokenForChannelSelector = currentToken; // Store the current token before matching
+			IToken firstTokenForChannelSelector = currentToken;
 			match(COLON);
-			IToken colorToken = currentToken; // Store the current token for color
+			IToken colorToken = currentToken;
 			match(colorToken.kind());
 			channelSelector = new ChannelSelector(firstTokenForChannelSelector, colorToken);
 		}
@@ -245,7 +209,7 @@ public class ExpressionParser implements IParser {
 
 	private Expr expandedPixelExpr() throws PLCCompilerException {
 		if (currentToken.kind() == LSQUARE) {
-			IToken firstToken = currentToken; // Store the current token for later use
+			IToken firstToken = currentToken;
 			match(LSQUARE);
 			Expr redExpr = expr();
 			match(COMMA);
@@ -282,12 +246,16 @@ public class ExpressionParser implements IParser {
 				e = expr();
 				match(RPAREN);
 			}
-			case CONST -> { // Assuming Z and MAGENTA are constants
+			case CONST -> {
 				e = new ConstExpr(currentToken);
 				match(CONST);
 			}
 			case LSQUARE -> {
 				e = expandedPixelExpr();
+			}
+			case BOOLEAN_LIT -> {
+				e = new BooleanLitExpr(currentToken);
+				match(BOOLEAN_LIT);
 			}
 			default -> throw new SyntaxException("Unexpected token: " + currentToken);
 		}
