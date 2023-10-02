@@ -674,6 +674,36 @@ class ExpressionParserTest_starter {
 		});
 	}
 
+	@Test
+	void testOneSmallBracket() throws PLCCompilerException {
+		String input = """
+           [1, 2
+           """;
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void testParenthesisInsideChannel() throws PLCCompilerException {
+		String input = """
+         (a):red
+
+
+         """;
+		AST ast = getAST(input);
+		checkPostfixExpr(ast, false, true);
+		Expr v0 = ((PostfixExpr) ast).primary();
+		checkIdentExpr(v0, "a");
+		ChannelSelector v1 = ((PostfixExpr) ast).channel();
+		checkChannelSelector(v1, Kind.RES_red);
+
+
+	}
+
+
+
 
 
 }
