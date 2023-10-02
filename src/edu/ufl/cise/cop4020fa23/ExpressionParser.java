@@ -77,7 +77,11 @@ public class ExpressionParser implements IParser {
 
 
 	private Expr expr() throws PLCCompilerException {
-		return conditionalExpr();
+		if (currentToken.kind() == QUESTION) {
+			return conditionalExpr();
+		} else {
+			return logicalOrExpr();
+		}
 	}
 
 	private Expr conditionalExpr() throws PLCCompilerException {
@@ -262,14 +266,11 @@ public class ExpressionParser implements IParser {
 
 	private void match(Kind kind) throws PLCCompilerException {
 		if (currentToken.kind() == kind) {
-			consume();
+			currentToken = tokens.next();
 		} else {
 			throw new SyntaxException("Expected " + kind + " but found " + currentToken.kind());
 		}
 	}
 
-	private void consume() throws PLCCompilerException {
-		currentToken = tokens.next();
-	}
 
 }
