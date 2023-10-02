@@ -582,5 +582,98 @@ class ExpressionParserTest_starter {
 		checkNumLitExpr(blue, 3);
 	}
 
+	@Test
+	void unitTestConditionalExpression() throws PLCCompilerException {
+		String input = """
+  ? x&5 -> y * 2 , y - 2
+  """;
+		AST ast = getAST(input);
+		assertThat("", ast, instanceOf(ConditionalExpr.class));
+		Expr guard = ((ConditionalExpr) ast).getGuardExpr();
+		Expr left = ((ConditionalExpr) ast).getTrueExpr();
+		Expr right = ((ConditionalExpr) ast).getFalseExpr();
+		checkBinaryExpr(guard, Kind.BITAND);
+		checkBinaryExpr(left, Kind.TIMES);
+		checkBinaryExpr(right, Kind.MINUS);
+	}
+	@Test
+	void unitTestUnaryExprOps() throws PLCCompilerException {
+		String input = """
+  !width-height(test)      
+  """;
+		AST ast = getAST(input);
+		assertThat("", ast, instanceOf(UnaryExpr.class));
+		Expr unary2 = ((UnaryExpr) ast).getExpr();
+		Expr unary3 = ((UnaryExpr) unary2).getExpr();
+		Expr unary4 = ((UnaryExpr) unary3).getExpr();
+		checkUnaryExpr(ast, Kind.BANG);
+		checkUnaryExpr(unary2, Kind.RES_width);
+		checkUnaryExpr(unary3, Kind.MINUS);
+		checkUnaryExpr(unary4, Kind.RES_height);
+	}
+
+	// I don’t have that many tests to share but I’ll give what I have.
+	@Test
+	void testPostfixExpression() throws PLCCompilerException {
+		String input = """
+       BLUE
+       """;
+		AST ast = getAST(input);
+		assertThat("", ast, instanceOf(ConstExpr.class));
+	}
+
+
+	@Test
+	void testPrimaryExpression() throws PLCCompilerException {
+		String input = """
+       "hello"
+       """;
+		AST ast = getAST(input);
+		StringLitExpr expr = checkStringLitExpr(ast, "hello");
+	}
+
+
+	@Test
+	void testMultiplicativeExpression() throws PLCCompilerException {
+		String input = """
+       1*2/3
+       """;
+		AST ast = getAST(input);
+		checkBinaryExpr(ast, Kind.DIV);
+		Expr v0 = ((BinaryExpr) ast).getLeftExpr();
+		checkBinaryExpr(v0, Kind.TIMES);
+		Expr v1 = ((BinaryExpr) v0).getLeftExpr();
+		checkNumLitExpr(v1, 1);
+		Expr v2 = ((BinaryExpr) v0).getRightExpr();
+		checkNumLitExpr(v2, 2);
+		Expr v3 = ((BinaryExpr) ast).getRightExpr();
+		checkNumLitExpr(v3, 3);
+	}
+
+
+	@Test
+	void testOneBracket() throws PLCCompilerException {
+		String input = """
+       [1, 2, 3
+       """;
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+
+	@Test
+	void testOneParenthesis() throws PLCCompilerException {
+		String input = """
+       (3
+       """;
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+
 
 }

@@ -82,7 +82,7 @@ public class ExpressionParser implements IParser {
 
 	private Expr conditionalExpr() throws PLCCompilerException {
 		if (currentToken.kind() == QUESTION) {
-			IToken firstToken = currentToken; 
+			IToken firstToken = currentToken;
 			match(QUESTION);
 			Expr guardExpr = expr();
 			match(RARROW);
@@ -191,7 +191,6 @@ public class ExpressionParser implements IParser {
 			match(RSQUARE);
 			pixelSelector = new PixelSelector(firstTokenForPixelSelector, x, y);
 		}
-
 		if (currentToken.kind() == COLON) {
 			IToken firstTokenForChannelSelector = currentToken;
 			match(COLON);
@@ -199,7 +198,6 @@ public class ExpressionParser implements IParser {
 			match(colorToken.kind());
 			channelSelector = new ChannelSelector(firstTokenForChannelSelector, colorToken);
 		}
-
 		if (pixelSelector != null || channelSelector != null) {
 			e = new PostfixExpr(e.firstToken(), e, pixelSelector, channelSelector);
 		}
