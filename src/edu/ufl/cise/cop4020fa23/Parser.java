@@ -68,14 +68,6 @@ public class Parser implements IParser {
 	@Override
 	public AST parse() throws PLCCompilerException {
 		AST ast = program();
-
-		if (ast == null) {
-			if (currentToken.kind() != Kind.EOF) {
-				throw new SyntaxException("Expected end of input but found " + currentToken.kind());
-			}
-			return null;
-		}
-
 		return ast;
 	}
 
