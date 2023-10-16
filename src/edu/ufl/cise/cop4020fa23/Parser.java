@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+
 //		Program::= Type IDENT ( ParamList ) Block
 //		Block ::= <: (Declaration ; | Statement ;)* :>
 //		ParamList ::= ε | NameDef ( , NameDef ) *
@@ -53,6 +54,7 @@ import java.util.List;
 //		GuardedBlock := Expr -> Block
 //		BlockStatement ::= Block
 
+
 public class Parser implements IParser {
 
 	final ILexer tokens;
@@ -66,22 +68,34 @@ public class Parser implements IParser {
 	@Override
 	public AST parse() throws PLCCompilerException {
 		AST ast = program();
-		if (currentToken.kind() != Kind.EOF) {
-			throw new SyntaxException("Expected end of input but found " + currentToken.kind());
+
+		if (ast == null) {
+			if (currentToken.kind() != Kind.EOF) {
+				throw new SyntaxException("Expected end of input but found " + currentToken.kind());
+			}
+			return null;
 		}
+
 		return ast;
 	}
 
 	private Program program() throws PLCCompilerException {
 		IToken firstToken = currentToken;
+
 		IToken typeToken = currentToken;
 		matchType();
 		IToken identToken = currentToken;
 		match(Kind.IDENT);
+
 		match(Kind.LPAREN);
 		List<NameDef> params = paramList();
 		match(Kind.RPAREN);
 		Block block = block();
+
+		if (currentToken.kind() != Kind.EOF) {
+			throw new SyntaxException("Expected end of input but found " + currentToken.kind());
+		}
+
 		return new Program(firstToken, typeToken, identToken, params, block);
 	}
 
@@ -119,7 +133,6 @@ public class Parser implements IParser {
 		return new Dimension(firstToken, width, height);
 	}
 
-
 	private Block block() throws PLCCompilerException {
 		if(currentToken.kind() == Kind.RARROW) {
 			throw new SyntaxException("RARROW found but not handled. Update the logic.");
@@ -148,8 +161,6 @@ public class Parser implements IParser {
 		return new Block(currentToken, elems);
 	}
 
-
-
 	private boolean isType(Kind kind) {
 		return kind == Kind.RES_image || kind == Kind.RES_pixel || kind == Kind.RES_int ||
 				kind == Kind.RES_string || kind == Kind.RES_void || kind == Kind.RES_boolean;
@@ -166,7 +177,6 @@ public class Parser implements IParser {
 		match(Kind.SEMI);
 		return new Declaration(startToken, nameDef, initializer);
 	}
-
 
 	private Statement statement() throws PLCCompilerException {
 		switch (currentToken.kind()) {
@@ -227,10 +237,6 @@ public class Parser implements IParser {
 		}
 	}
 
-
-
-
-
 	private StatementBlock blockStatement() throws PLCCompilerException {
 		Block blockContent = block();
 		return new StatementBlock(currentToken, blockContent);
@@ -269,7 +275,6 @@ public class Parser implements IParser {
 		return new PixelSelector(currentToken, xCoord, yCoord);
 	}
 
-
 	private ChannelSelector channelSelector() throws PLCCompilerException {
 		IToken channelToken = currentToken;
 		match(Kind.COLON);
@@ -300,96 +305,211 @@ public class Parser implements IParser {
 		return new GuardedBlock(currentToken, condition, block);
 	}
 
-
 	private Expr expr() throws PLCCompilerException {
-		Expr result = additiveExpr();
-		while (true) {
-			IToken opToken = currentToken;
-			switch (opToken.kind()) {
-				case PLUS:
-					match(PLUS);
-					IToken leftToken = result.firstToken;
-					result = new BinaryExpr(leftToken, result, opToken, additiveExpr());
-					break;
-				case MINUS:
-					match(MINUS);
-					leftToken = result.firstToken;
-					result = new BinaryExpr(leftToken, result, opToken, additiveExpr());
-					break;
-				default:
-					return result;
-			}
+		if (currentToken.kind() == QUESTION) {
+			return conditionalExpr();
+		} else {
+			return logicalOrExpr();
 		}
 	}
 
+	private Expr conditionalExpr() throws PLCCompilerException {
+		if (currentToken.kind() == QUESTION) {
+			IToken firstToken = currentToken;
+			match(QUESTION);
+			Expr guardExpr = expr();
+			match(RARROW);
+			Expr trueExpr = expr();
+			List<Expr> falseExprs = new ArrayList<>();
+
+			while (currentToken.kind() == COMMA) {
+				match(COMMA);
+				falseExprs.add(expr());
+			}
+
+			Expr falseExpr = falseExprs.size() > 0 ? falseExprs.get(0) : null;
+			return new ConditionalExpr(firstToken, guardExpr, trueExpr, falseExpr);
+		}
+		return logicalOrExpr();
+	}
+
+	private Expr logicalOrExpr() throws PLCCompilerException {
+		Expr e = logicalAndExpr();
+		while (currentToken.kind() == OR || currentToken.kind() == BITOR) {
+			IToken opToken = currentToken;
+			match(currentToken.kind());
+			Expr e2 = logicalAndExpr();
+			e = new BinaryExpr(opToken, e, opToken, e2);
+		}
+		return e;
+	}
+
+	private Expr logicalAndExpr() throws PLCCompilerException {
+		Expr e = comparisonExpr();
+		while (currentToken.kind() == AND || currentToken.kind() == BITAND) {
+			IToken opToken = currentToken;
+			match(opToken.kind());
+			Expr e2 = comparisonExpr();
+			e = new BinaryExpr(opToken, e, opToken, e2);
+		}
+		return e;
+	}
+
+	private Expr comparisonExpr() throws PLCCompilerException {
+		Expr e = powExpr();
+		while (Arrays.asList(LT, GT, LE, GE, EQ).contains(currentToken.kind())) {
+			IToken opToken = currentToken;
+			match(opToken.kind());
+			Expr e2 = powExpr();
+			e = new BinaryExpr(opToken, e, opToken, e2);
+		}
+		return e;
+	}
+
+	private Expr powExpr() throws PLCCompilerException {
+		Expr e = additiveExpr();
+		if (currentToken.kind() == EXP) {
+			IToken opToken = currentToken;
+			match(EXP);
+			Expr e2 = powExpr();
+			e = new BinaryExpr(opToken, e, opToken, e2);
+		}
+		return e;
+	}
 
 	private Expr additiveExpr() throws PLCCompilerException {
-		Expr result = term();
-		while (true) {
+		Expr e = multiplicativeExpr();
+		while (currentToken.kind() == PLUS || currentToken.kind() == MINUS) {
 			IToken opToken = currentToken;
-			switch (opToken.kind()) {
-				case TIMES:
-					match(TIMES);
-					IToken leftToken = result.firstToken;
-					result = new BinaryExpr(leftToken, result, opToken, term());
-					break;
-				case DIV:
-					match(DIV);
-					leftToken = result.firstToken;
-					result = new BinaryExpr(leftToken, result, opToken, term());
-					break;
+			match(opToken.kind());
+			Expr e2 = multiplicativeExpr();
+			e = new BinaryExpr(opToken, e, opToken, e2);
+		}
+		return e;
+	}
 
-				default:
-					return result;
-			}
+	private Expr multiplicativeExpr() throws PLCCompilerException {
+		Expr e = unaryExpr();
+		while (Arrays.asList(TIMES, DIV, MOD).contains(currentToken.kind())) {
+			IToken opToken = currentToken;
+			match(opToken.kind());
+			Expr e2 = unaryExpr();
+			e = new BinaryExpr(opToken, e, opToken, e2);
+		}
+		return e;
+	}
+
+	private Expr unaryExpr() throws PLCCompilerException {
+		if (Arrays.asList(BANG, MINUS).contains(currentToken.kind())) {
+			IToken opToken = currentToken;
+			match(opToken.kind());
+			Expr e = unaryExpr();
+			return new UnaryExpr(opToken, opToken, e);
+		} else if (Arrays.asList(RES_height, RES_width).contains(currentToken.kind())) {
+			IToken opToken = currentToken;
+			match(opToken.kind());
+			Expr e = unaryExpr();
+			return new UnaryExpr(opToken, opToken, e);
+		}
+		return unaryExprPostfix();
+	}
+
+	private Expr unaryExprPostfix() throws PLCCompilerException {
+		Expr e = primaryExpr();
+		PixelSelector pixelSelector = null;
+		ChannelSelector channelSelector = null;
+
+		if (currentToken.kind() == LSQUARE) {
+			IToken firstTokenForPixelSelector = currentToken;
+			match(LSQUARE);
+			Expr x = expr();
+			match(COMMA);
+			Expr y = expr();
+			match(RSQUARE);
+			pixelSelector = new PixelSelector(firstTokenForPixelSelector, x, y);
+		}
+		if (currentToken.kind() == COLON) {
+			IToken firstTokenForChannelSelector = currentToken;
+			match(COLON);
+			IToken colorToken = currentToken;
+			match(colorToken.kind());
+			channelSelector = new ChannelSelector(firstTokenForChannelSelector, colorToken);
+		}
+		if (pixelSelector != null || channelSelector != null) {
+			e = new PostfixExpr(e.firstToken(), e, pixelSelector, channelSelector);
+		}
+
+		return e;
+	}
+
+	private Expr expandedPixelExpr() throws PLCCompilerException {
+		if (currentToken.kind() == LSQUARE) {
+			IToken firstToken = currentToken;
+			match(LSQUARE);
+			Expr redExpr = expr();
+			match(COMMA);
+			Expr greenExpr = expr();
+			match(COMMA);
+			Expr blueExpr = expr();
+			match(RSQUARE);
+			return new ExpandedPixelExpr(firstToken, redExpr, greenExpr, blueExpr);
+		} else {
+			throw new SyntaxException("Expected [ but found " + currentToken.kind());
 		}
 	}
 
-
-	private Expr term() throws PLCCompilerException {
+	private Expr primaryExpr() throws PLCCompilerException {
+		Expr e = null;
+		if (currentToken == null || currentToken.kind() == EOF) {
+			throw new SyntaxException("Unexpected end of input");
+		}
 		switch (currentToken.kind()) {
-			case NUM_LIT:
-				IToken numToken = currentToken;
-				match(Kind.NUM_LIT);
-				return new NumLitExpr(numToken);
+			case IDENT -> {
+				e = new IdentExpr(currentToken);
+				match(IDENT);
 
-			case CONST:
-				IToken constToken = currentToken;
-				match(Kind.CONST);
-				return new ConstExpr(constToken);
+				if (currentToken.kind() == COLON) {
+					IToken firstTokenForChannelSelector = currentToken;
+					match(COLON);
 
-			case IDENT:
-				IToken identToken = currentToken;
-				match(Kind.IDENT);
-				return new IdentExpr(identToken);
-
-			case LSQUARE:
-				IToken firstToken = currentToken;
-				match(Kind.LSQUARE);
-				Expr red = expr();
-				match(Kind.COMMA);
-				Expr green = expr();
-				match(Kind.COMMA);
-				Expr blue = expr();
-				match(Kind.RSQUARE);
-				return new ExpandedPixelExpr(firstToken, red, green, blue);
-
-			case STRING_LIT:
-				IToken stringToken = currentToken;
-				match(Kind.STRING_LIT);
-				return new StringLitExpr(stringToken);
-
-			case BOOLEAN_LIT:
-				IToken boolToken = currentToken;
-				match(Kind.BOOLEAN_LIT);
-				return new BooleanLitExpr(boolToken);
-
-			default:
-				throw new SyntaxException("Unexpected token in expression: " + currentToken.kind());
+					if (Arrays.asList(RES_red, RES_green, RES_blue).contains(currentToken.kind())) {
+						IToken colorToken = currentToken;
+						match(colorToken.kind());
+						ChannelSelector channelSelector = new ChannelSelector(firstTokenForChannelSelector, colorToken);
+						e = new PostfixExpr(e.firstToken(), e, null, channelSelector);
+					} else {
+						throw new SyntaxException("Expected color (red, green, blue) after COLON but found " + currentToken.kind());
+					}
+				}
+			}
+			case NUM_LIT -> {
+				e = new NumLitExpr(currentToken);
+				match(NUM_LIT);
+			}
+			case STRING_LIT -> {
+				e = new StringLitExpr(currentToken);
+				match(STRING_LIT);
+			}
+			case LPAREN -> {
+				match(LPAREN);
+				e = expr();
+				match(RPAREN);
+			}
+			case CONST -> {
+				e = new ConstExpr(currentToken);
+				match(CONST);
+			}
+			case LSQUARE -> {
+				e = expandedPixelExpr();
+			}
+			case BOOLEAN_LIT -> {
+				e = new BooleanLitExpr(currentToken);
+				match(BOOLEAN_LIT);
+			}
+			default -> throw new SyntaxException("Unexpected token: " + currentToken);
 		}
+		return e;
 	}
-
-
 
 	private void match(Kind expected) throws PLCCompilerException {
 		if (currentToken.kind() == expected) {
