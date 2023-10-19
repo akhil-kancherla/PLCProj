@@ -98,6 +98,7 @@ public class ExpressionParser implements IParser {
 		return logicalOrExpr();
 	}
 
+
 	private Expr logicalOrExpr() throws PLCCompilerException {
 		Expr e = logicalAndExpr();
 		while (currentToken.kind() == OR || currentToken.kind() == BITOR) {

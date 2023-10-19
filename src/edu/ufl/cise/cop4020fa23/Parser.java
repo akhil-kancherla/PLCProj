@@ -172,13 +172,13 @@ public class Parser implements IParser {
 
 	private Statement statement() throws PLCCompilerException {
 		switch (currentToken.kind()) {
-			case RES_write:
+			case RES_write -> {
 				match(Kind.RES_write);
 				Expr e = expr();
 				match(Kind.SEMI);
 				return new WriteStatement(currentToken, e);
-
-			case IDENT:
+			}
+			case IDENT -> {
 				LValue lValue = lValue();
 				if (currentToken.kind() == Kind.ASSIGN) {
 					match(Kind.ASSIGN);
@@ -188,44 +188,41 @@ public class Parser implements IParser {
 				} else {
 					throw new SyntaxException("Expected ASSIGN but found " + currentToken.kind());
 				}
-
-			case RETURN:
+			}
+			case RETURN -> {
 				match(Kind.RETURN);
 				Expr returnValue = expr();
 				match(Kind.SEMI);
 				return new ReturnStatement(currentToken, returnValue);
-
-			case RES_if:
+			}
+			case RES_if -> {
 				match(Kind.RES_if);
 				List<GuardedBlock> guardedBlocks = new ArrayList<>();
 				guardedBlocks.add(guardedBlock());
-
 				while (currentToken.kind() == Kind.BOX) {
 					match(Kind.BOX);
 					guardedBlocks.add(guardedBlock());
 				}
 				match(Kind.RES_fi);
 				return new IfStatement(currentToken, guardedBlocks);
-
-			case RES_do:
+			}
+			case RES_do -> {
 				match(Kind.RES_do);
 				List<GuardedBlock> doGuardedBlocks = new ArrayList<>();
 				doGuardedBlocks.add(guardedBlock());
-
 				while (currentToken.kind() == Kind.BOX) {
 					match(Kind.BOX);
 					doGuardedBlocks.add(guardedBlock());
 				}
 				match(Kind.RES_od);
 				return new DoStatement(currentToken, doGuardedBlocks);
-
-			case BLOCK_OPEN:
+			}
+			case BLOCK_OPEN -> {
 				Statement blockStmt = blockStatement();
 				match(Kind.SEMI);
 				return blockStmt;
-
-			default:
-				throw new SyntaxException("Unexpected token in statement: " + currentToken.kind());
+			}
+			default -> throw new SyntaxException("Unexpected token in statement: " + currentToken.kind());
 		}
 	}
 
