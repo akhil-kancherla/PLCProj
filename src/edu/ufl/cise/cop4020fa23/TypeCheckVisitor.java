@@ -2,8 +2,27 @@ package edu.ufl.cise.cop4020fa23;
 
 import edu.ufl.cise.cop4020fa23.ast.*;
 import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
+import java.util.List;
+
 
 public class TypeCheckVisitor implements ASTVisitor {
+
+    @Override
+    public Object visitProgram(Program program, Object arg) throws PLCCompilerException {
+        LeblancSymbolTable st = new LeblancSymbolTable();
+        st.currentNum = program;
+        Type type = Type.kind2type(program.getTypeToken().kind());
+        program.setType(type);
+        st.enterScope();
+        List<NameDef> params = program.getParams();
+        for (NameDef param : params) {
+            param.visit(this, arg);
+        }
+        program.getBlock().visit(this, arg);
+        st.leaveScope();
+        return type;
+        return null;
+    }
 
     @Override
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
@@ -82,7 +101,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitNumLitExpr(NumLitExpr numLitExpr, Object arg) throws PLCCompilerException {
-        return null;
+        return numLitExpr.getType();
     }
 
     @Override
@@ -92,11 +111,6 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitPostfixExpr(PostfixExpr postfixExpr, Object arg) throws PLCCompilerException {
-        return null;
-    }
-
-    @Override
-    public Object visitProgram(Program program, Object arg) throws PLCCompilerException {
         return null;
     }
 
