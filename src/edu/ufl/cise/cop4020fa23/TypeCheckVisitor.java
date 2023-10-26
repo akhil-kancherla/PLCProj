@@ -7,21 +7,43 @@ import edu.ufl.cise.cop4020fa23.LeBlancSymbolTable;
 
 
 public class TypeCheckVisitor implements ASTVisitor {
+    LeBlancSymbolTable symbolTable = new LeBlancSymbolTable();
 
     @Override
     public Object visitProgram(Program program, Object arg) throws PLCCompilerException {
-        LeBlancSymbolTable st = new LeBlancSymbolTable();
-        //st.currentNum = program;
+        symbolTable.enterScope();
+
+        // Handle the program type.
         Type type = Type.kind2type(program.getTypeToken().kind());
         program.setType(type);
-        st.enterScope();
-        List<NameDef> params = program.getParams();
-        for (NameDef param : params) {
-            param.visit(this, arg);
+
+        // Check the children (NameDefs and Block).
+        for (NameDef nameDef : program.getParams()) {
+            nameDef.visit(this, arg);
         }
         program.getBlock().visit(this, arg);
-        st.leaveScope();
+
+        symbolTable.leaveScope();
         return type;
+    }
+
+    @Override
+    public Object visitBlock(Block block, Object arg) throws PLCCompilerException {
+        symbolTable.enterScope();
+
+        // Check children in the block.
+        for (Block.BlockElem blockElem : block.getElems()) {
+            blockElem.visit(this, arg);
+        }
+
+        symbolTable.leaveScope();
+
+        return null;
+    }
+
+    @Override
+    public Object visitNameDef(NameDef nameDef, Object arg) throws PLCCompilerException {
+        return null;
     }
 
     @Override
@@ -34,10 +56,6 @@ public class TypeCheckVisitor implements ASTVisitor {
         return null;
     }
 
-    @Override
-    public Object visitBlock(Block block, Object arg) throws PLCCompilerException {
-        return null;
-    }
 
     @Override
     public Object visitBlockStatement(StatementBlock statementBlock, Object arg) throws PLCCompilerException {
@@ -94,14 +112,13 @@ public class TypeCheckVisitor implements ASTVisitor {
         return null;
     }
 
-    @Override
-    public Object visitNameDef(NameDef nameDef, Object arg) throws PLCCompilerException {
-        return null;
-    }
+
 
     @Override
     public Object visitNumLitExpr(NumLitExpr numLitExpr, Object arg) throws PLCCompilerException {
-        return numLitExpr.getType();
+        Type type = Type.INT;
+        numLitExpr.setType(type);
+        return type;
     }
 
     @Override
@@ -131,7 +148,8 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws PLCCompilerException {
-        return null;
+        writeStatement.getExpr().visit(this, arg);
+        return writeStatement;
     }
 
     @Override
