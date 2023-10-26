@@ -3,14 +3,15 @@ package edu.ufl.cise.cop4020fa23;
 import edu.ufl.cise.cop4020fa23.ast.*;
 import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
 import java.util.List;
+import edu.ufl.cise.cop4020fa23.LeBlancSymbolTable;
 
 
 public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitProgram(Program program, Object arg) throws PLCCompilerException {
-        LeblancSymbolTable st = new LeblancSymbolTable();
-        st.currentNum = program;
+        LeBlancSymbolTable st = new LeBlancSymbolTable();
+        //st.currentNum = program;
         Type type = Type.kind2type(program.getTypeToken().kind());
         program.setType(type);
         st.enterScope();
@@ -21,7 +22,6 @@ public class TypeCheckVisitor implements ASTVisitor {
         program.getBlock().visit(this, arg);
         st.leaveScope();
         return type;
-        return null;
     }
 
     @Override

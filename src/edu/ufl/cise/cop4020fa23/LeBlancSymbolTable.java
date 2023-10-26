@@ -4,17 +4,24 @@ import java.util.HashMap;
 import java.util.Stack;
 
 public class LeBlancSymbolTable {
-    private int currentNum; // serial number of the current scope
-    private int nextNum; // next serial number to assign
-    private HashMap<String, Integer> symbolTable; // Symbol table to store entries
-    private Stack<Integer> scopeStack; // Stack to manage scope levels
+    int currentNum; // serial number of the current scope
+    int nextNum; // next serial number to assign
+    HashMap<String, Integer> symbolTable; // Symbol table to store entries
+    Stack<Integer> scopeStack; // Stack to manage scope levels
+
+    public LeBlancSymbolTable() {
+        currentNum = 0;
+        nextNum = 0;
+        symbolTable = new HashMap<>();
+        scopeStack = new Stack<>();
+    }
 
     public void enterScope() {
         currentNum = nextNum++;
         scopeStack.push(currentNum);
     }
 
-    public void closeScope() {
+    public void leaveScope() {
         currentNum = scopeStack.pop();
     }
 
