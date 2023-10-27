@@ -158,83 +158,89 @@ public class TypeCheckVisitor implements ASTVisitor {
         return null;
     }
 
-    
 
     @Override
-    public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
-        return null;
+    public Object visitUnaryExpr(UnaryExpr unaryExpr, Object arg) throws PLCCompilerException {
+        Expr operand = unaryExpr.getExpr();
+        Kind operator = unaryExpr.getOp();
+
+        Type operandType = (Type) operand.visit(this, arg);
+
+        Type resultType = inferUnaryExprType(operandType, operator);
+
+        if (resultType != null) {
+            unaryExpr.setType(resultType);
+            return resultType;
+        } else {
+            throw new PLCCompilerException("Invalid types in UnaryExpr.");
+        }
     }
 
-
-
-    @Override
-    public Object visitBlockStatement(StatementBlock statementBlock, Object arg) throws PLCCompilerException {
-        return null;
+    private Type inferUnaryExprType(Type exprType, Kind operator) {
+        if (operator == Kind.BANG && exprType == Type.BOOLEAN) {
+            return Type.BOOLEAN;
+        } else if (operator == Kind.MINUS && exprType == Type.INT) {
+            return Type.INT;
+        } else if ((operator == Kind.RES_width || operator == Kind.RES_height) && exprType == Type.IMAGE) {
+            return Type.INT;
+        } else {
+            return null;
+        }
     }
 
-    @Override
-    public Object visitChannelSelector(ChannelSelector channelSelector, Object arg) throws PLCCompilerException {
-        return null;
-    }
-
-
-
-    @Override
-    public Object visitDimension(Dimension dimension, Object arg) throws PLCCompilerException {
-        return null;
-    }
-
-    @Override
-    public Object visitDoStatement(DoStatement doStatement, Object arg) throws PLCCompilerException {
-        return null;
-    }
-
-    @Override
-    public Object visitExpandedPixelExpr(ExpandedPixelExpr expandedPixelExpr, Object arg) throws PLCCompilerException {
-        return null;
-    }
-
-    @Override
-    public Object visitGuardedBlock(GuardedBlock guardedBlock, Object arg) throws PLCCompilerException {
-        return null;
-    }
-
-    @Override
-    public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCCompilerException {
-        return null;
-    }
-
-    @Override
-    public Object visitIfStatement(IfStatement ifStatement, Object arg) throws PLCCompilerException {
-        return null;
-    }
-
-    @Override
-    public Object visitLValue(LValue lValue, Object arg) throws PLCCompilerException {
-        return null;
-    }
-
-
-
-    @Override
-    public Object visitNumLitExpr(NumLitExpr numLitExpr, Object arg) throws PLCCompilerException {
-        Type type = Type.INT;
-        numLitExpr.setType(type);
-        return type;
-    }
-
-    @Override
-    public Object visitPixelSelector(PixelSelector pixelSelector, Object arg) throws PLCCompilerException {
-        return null;
-    }
 
     @Override
     public Object visitPostfixExpr(PostfixExpr postfixExpr, Object arg) throws PLCCompilerException {
-        return null;
+        Expr primary = postfixExpr.primary(); // Get the primary expression
+        PixelSelector pixelSelector = postfixExpr.pixel(); // Get the PixelSelector
+        ChannelSelector channelSelector = postfixExpr.channel(); // Get the ChannelSelector
+
+        Type primaryType = (Type) primary.visit(this, arg);
+
+        // Initialize PixelSelector and ChannelSelector types as null
+        Type pixelSelectorType = null;
+        Type channelSelectorType = null;
+
+        // If PixelSelector is not null, visit it to determine its type
+        if (pixelSelector != null) {
+            pixelSelectorType = (Type) pixelSelector.visit(this, arg);
+        }
+
+        // If ChannelSelector is not null, set its type
+        if (channelSelector != null) {
+            channelSelectorType = Type.kind2type(channelSelector.color());
+        }
+
+        // Determine the resulting type using inferPostfixExprType
+        Type resultType = inferPostfixExprType(primaryType, pixelSelectorType, channelSelectorType);
+
+        if (resultType != null) {
+            postfixExpr.setType(resultType);
+            return resultType;
+        } else {
+            throw new PLCCompilerException("Invalid types in PostfixExpr.");
+        }
     }
 
-    @Override
-    public Object visitReturnStatement(ReturnStatement returnStatement, Object arg) throws PLCCompilerException {
+    private Type inferPostfixExprType(Type primaryType, Type pixelSelectorType, Type channelSelectorType) {
+        if (primaryType == null) {
+            return null;
+        }
+        if (pixelSelectorType == null && channelSelectorType == null) {
+            return primaryType;
+        }
+        if (pixelSelectorType != null && channelSelectorType == null) {
+            return Type.PIXEL;
+        }
+        if (pixelSelectorType != null && channelSelectorType != null) {
+            return Type.INT;
+        }
+        if (pixelSelectorType == null && channelSelectorType != null && primaryType == Type.IMAGE) {
+            return Type.IMAGE;
+        }
+        if (pixelSelectorType == null && channelSelectorType != null && primaryType == Type.PIXEL) {
+            return Type.INT;
+        }
         return null;
     }
 
@@ -246,23 +252,146 @@ public class TypeCheckVisitor implements ASTVisitor {
     }
 
     @Override
-    public Object visitUnaryExpr(UnaryExpr unaryExpr, Object arg) throws PLCCompilerException {
-        return null;
+    public Object visitNumLitExpr(NumLitExpr numLitExpr, Object arg) throws PLCCompilerException {
+        Type type = Type.INT;
+        numLitExpr.setType(type);
+        return type;
     }
 
     @Override
-    public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws PLCCompilerException {
-        writeStatement.getExpr().visit(this, arg);
-        return writeStatement;
+    public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCCompilerException {
+//        NameDef name = identExpr.getNameDef();
+//        //NameDef nameDef = symbolTable.lookup(name);
+//
+//        if (nameDef != null) {
+//            identExpr.setNameDef(nameDef);
+//            identExpr.setType(nameDef.getType());
+//            return nameDef.getType();
+//        } else {
+//            throw new PLCCompilerException("Undefined identifier: " + name);
+//        }
+        return null;
+    }
+
+
+    public Object visitConstExpr(ConstExpr constExpr, Object arg) throws PLCCompilerException {
+        if (constExpr.getName() == "Z") {
+            constExpr.setType(Type.INT);
+            return Type.INT;
+        }
+        else {
+            constExpr.setType(Type.PIXEL);
+            return Type.PIXEL;
+        }
+
     }
 
     @Override
     public Object visitBooleanLitExpr(BooleanLitExpr booleanLitExpr, Object arg) throws PLCCompilerException {
+        Type type = Type.BOOLEAN;
+        booleanLitExpr.setType(type);
+        return type;
+    }
+
+    @Override
+    public Object visitChannelSelector(ChannelSelector channelSelector, Object arg) throws PLCCompilerException {
         return null;
     }
 
     @Override
-    public Object visitConstExpr(ConstExpr constExpr, Object arg) throws PLCCompilerException {
+    public Object visitPixelSelector(PixelSelector pixelSelector, Object arg) throws PLCCompilerException {
         return null;
     }
+
+    @Override
+    public Object visitExpandedPixelExpr(ExpandedPixelExpr expandedPixelExpr, Object arg) throws PLCCompilerException {
+        Expr redExpr = expandedPixelExpr.getRed();
+        Expr greenExpr = expandedPixelExpr.getGreen();
+        Expr blueExpr = expandedPixelExpr.getBlue();
+
+        Type redType = (Type) redExpr.visit(this, arg);
+        Type greenType = (Type) greenExpr.visit(this, arg);
+        Type blueType = (Type) blueExpr.visit(this, arg);
+
+        if (redType == Type.INT && greenType == Type.INT && blueType == Type.INT) {
+            return Type.PIXEL;
+        } else {
+            throw new PLCCompilerException("Invalid types in ExpandedPixelExpr.");
+        }
+    }
+
+
+    @Override
+    public Object visitDimension(Dimension dimension, Object arg) throws PLCCompilerException {
+        Expr widthExpr = dimension.getWidth();
+        Expr heightExpr = dimension.getHeight();
+
+        Type widthType = (Type) widthExpr.visit(this, arg);
+        Type heightType = (Type) heightExpr.visit(this, arg);
+
+        if (widthType == Type.INT && heightType == Type.INT) {
+            return Type.IMAGE;
+        } else {
+            throw new PLCCompilerException("Invalid types in Dimension.");
+        }
+    }
+
+
+    @Override
+    public Object visitLValue(LValue lValue, Object arg) throws PLCCompilerException {
+        return null;
+    }
+
+    @Override
+    public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
+        return null;
+    }
+
+
+    @Override
+    public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws PLCCompilerException {
+        writeStatement.getExpr().visit(this, arg);
+        return null;
+    }
+
+    @Override
+    public Object visitDoStatement(DoStatement doStatement, Object arg) throws PLCCompilerException {
+        for (GuardedBlock guardedBlock : doStatement.getGuardedBlocks()) {
+            guardedBlock.visit(this, arg);
+        }
+        return null;
+    }
+
+    @Override
+    public Object visitIfStatement(IfStatement ifStatement, Object arg) throws PLCCompilerException {
+        for (GuardedBlock guardedBlock : ifStatement.getGuardedBlocks()) {
+            guardedBlock.visit(this, arg);
+        }
+        return null;
+    }
+
+
+    @Override
+    public Object visitGuardedBlock(GuardedBlock guardedBlock, Object arg) throws PLCCompilerException {
+        Type guardType = (Type) guardedBlock.getGuard().visit(this, arg);
+        if (guardType == Type.BOOLEAN) {
+            guardedBlock.getBlock().visit(this, arg);
+            return null;
+        } else {
+            throw new PLCCompilerException("Guard expression must have a BOOLEAN type.");
+        }
+    }
+
+
+    @Override
+    public Object visitReturnStatement(ReturnStatement returnStatement, Object arg) throws PLCCompilerException {
+        return null;
+    }
+
+
+    @Override
+    public Object visitBlockStatement(StatementBlock statementBlock, Object arg) throws PLCCompilerException {
+        return null;
+    }
+
 }
