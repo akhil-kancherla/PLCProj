@@ -102,6 +102,7 @@ public class NameDef extends AST {
 	}
 
 
+
 //	/**
 //	 * @param string
 //	 */

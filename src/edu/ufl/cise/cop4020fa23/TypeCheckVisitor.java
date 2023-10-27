@@ -43,6 +43,87 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitNameDef(NameDef nameDef, Object arg) throws PLCCompilerException {
+        Type type = Type.kind2type(nameDef.getTypeToken().kind());
+
+        // Check if Dimension is present.
+        if (nameDef.getDimension() != null) {
+            if (type != Type.IMAGE) {
+                throw new PLCCompilerException("Type of NameDef should be IMAGE when Dimension is present.");
+            }
+        } else if (type != Type.INT && type != Type.BOOLEAN && type != Type.STRING && type != Type.PIXEL && type != Type.IMAGE) {
+            throw new PLCCompilerException("Invalid Type for NameDef.");
+        }
+
+        //nameDef.setType(type);
+
+        // Insert the NameDef into the symbol table.
+        symbolTable.insert(nameDef.getName());
+
+        return type;
+    }
+
+    @Override
+    public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
+        NameDef nameDef = declaration.getNameDef();
+        Expr initializer = declaration.getInitializer();
+
+        // Visit the initializer Expr node if it's present
+        if (initializer != null) {
+            Type nameDefType = nameDef.getType();
+            Type exprType = (Type) initializer.visit(this, arg);
+
+            // Check the conditions specified in the rule
+            if (exprType == null || exprType == nameDefType) {
+                // Type is valid, no need to do anything
+            } else if (exprType == Type.STRING && nameDefType == Type.IMAGE) {
+                // Type is valid, no need to do anything
+            } else {
+                throw new PLCCompilerException("Invalid type for Declaration.");
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Object visitConditionalExpr(ConditionalExpr conditionalExpr, Object arg) throws PLCCompilerException {
+        Expr guardExpr = conditionalExpr.getGuardExpr();
+        Expr trueExpr = conditionalExpr.getTrueExpr();
+        Expr falseExpr = conditionalExpr.getFalseExpr();
+
+        // Visit the child expressions
+        Type guardType = (Type) guardExpr.visit(this, arg);
+        Type trueType = (Type) trueExpr.visit(this, arg);
+        Type falseType = (Type) falseExpr.visit(this, arg);
+
+        // Check the conditions
+        if (guardType == Type.BOOLEAN && trueType != null && trueType == falseType) {
+            conditionalExpr.setType(trueType);
+            return trueType;
+        } else {
+            throw new PLCCompilerException("Invalid types in ConditionalExpr.");
+        }
+        //return null;
+    }
+
+    @Override
+    public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws PLCCompilerException {
+//        Expr leftExpr = binaryExpr.getLeftExpr();
+//        Expr rightExpr = binaryExpr.getRightExpr();
+//        IToken operator = binaryExpr.getOp();
+//
+//        // Visit the left and right expressions
+//        Type leftType = (Type) leftExpr.visit(this, arg);
+//        Type rightType = (Type) rightExpr.visit(this, arg);
+//
+//        // Determine the resulting type using inferBinaryType
+//        Type resultType = inferBinaryType(leftType, operator, rightType);
+//
+//        if (resultType != null) {
+//            binaryExpr.setType(resultType);
+//            return resultType;
+//        } else {
+//            throw new PLCCompilerException("Invalid types in BinaryExpr.");
+//        }
         return null;
     }
 
@@ -51,10 +132,6 @@ public class TypeCheckVisitor implements ASTVisitor {
         return null;
     }
 
-    @Override
-    public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws PLCCompilerException {
-        return null;
-    }
 
 
     @Override
@@ -67,15 +144,7 @@ public class TypeCheckVisitor implements ASTVisitor {
         return null;
     }
 
-    @Override
-    public Object visitConditionalExpr(ConditionalExpr conditionalExpr, Object arg) throws PLCCompilerException {
-        return null;
-    }
 
-    @Override
-    public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
-        return null;
-    }
 
     @Override
     public Object visitDimension(Dimension dimension, Object arg) throws PLCCompilerException {
@@ -138,7 +207,9 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitStringLitExpr(StringLitExpr stringLitExpr, Object arg) throws PLCCompilerException {
-        return null;
+        Type type = Type.STRING;
+        stringLitExpr.setType(type);
+        return type;
     }
 
     @Override
