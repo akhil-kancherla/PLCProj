@@ -107,25 +107,58 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws PLCCompilerException {
-//        Expr leftExpr = binaryExpr.getLeftExpr();
-//        Expr rightExpr = binaryExpr.getRightExpr();
-//        IToken operator = binaryExpr.getOp();
-//
-//        // Visit the left and right expressions
-//        Type leftType = (Type) leftExpr.visit(this, arg);
-//        Type rightType = (Type) rightExpr.visit(this, arg);
-//
-//        // Determine the resulting type using inferBinaryType
-//        Type resultType = inferBinaryType(leftType, operator, rightType);
-//
-//        if (resultType != null) {
-//            binaryExpr.setType(resultType);
-//            return resultType;
-//        } else {
-//            throw new PLCCompilerException("Invalid types in BinaryExpr.");
-//        }
+        Expr leftExpr = binaryExpr.getLeftExpr();
+        Expr rightExpr = binaryExpr.getRightExpr();
+        IToken operator = binaryExpr.getOp();
+
+        // Visit the left and right expressions
+        Type leftType = (Type) leftExpr.visit(this, arg);
+        Type rightType = (Type) rightExpr.visit(this, arg);
+
+        // Determine the resulting type using inferBinaryType
+        Type resultType = inferBinaryType(leftType, operator, rightType);
+
+        if (resultType != null) {
+            binaryExpr.setType(resultType);
+            return resultType;
+        } else {
+            throw new PLCCompilerException("Invalid types in BinaryExpr.");
+        }
+        //return null;
+    }
+
+    private Type inferBinaryType(Type leftType, IToken operator, Type rightType) {
+        if (leftType == Type.PIXEL && (operator.kind() == Kind.BITAND || operator.kind() == Kind.BITAND) && rightType == Type.PIXEL) {
+            return Type.PIXEL;
+        }
+        else if (leftType == Type.BOOLEAN && (operator.kind() == Kind.AND || operator.kind() == Kind.OR) && rightType == Type.BOOLEAN) {
+            return Type.BOOLEAN;
+        }
+        else if (leftType == Type.INT && (operator.kind() == Kind.LT || operator.kind() == Kind.GT || operator.kind() == Kind.LE || operator.kind() == Kind.GE) && rightType == Type.INT) {
+            return Type.BOOLEAN;
+        }
+        else if (leftType == Type.INT && operator.kind() == Kind.EXP && rightType == Type.INT) {
+            return Type.INT;
+        }
+        else if (leftType == Type.PIXEL && operator.kind() == Kind.EXP && rightType == Type.INT) {
+            return Type.PIXEL;
+        }
+        else if ((leftType == Type.INT || leftType == Type.PIXEL || leftType == Type.IMAGE) && (operator.kind() == Kind.MINUS || operator.kind() == Kind.TIMES || operator.kind() == Kind.DIV || operator.kind() == Kind.MOD) && rightType == leftType) {
+            return leftType;
+        }
+        else if ((leftType == Type.PIXEL || leftType == Type.IMAGE) && (operator.kind() == Kind.TIMES || operator.kind() == Kind.DIV || operator.kind() == Kind.MOD) && rightType == Type.INT) {
+            return leftType;
+        }
+        else if (operator.kind() == Kind.EQ && rightType == leftType) {
+            return Type.BOOLEAN;
+        }
+        else if (operator.kind() == Kind.PLUS && rightType == leftType) {
+            return leftType;
+        }
         return null;
     }
+
+    
 
     @Override
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
