@@ -4,6 +4,7 @@ import edu.ufl.cise.cop4020fa23.ast.*;
 import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
 import java.util.List;
 import edu.ufl.cise.cop4020fa23.LeBlancSymbolTable;
+import edu.ufl.cise.cop4020fa23.exceptions.TypeCheckException;
 
 
 public class TypeCheckVisitor implements ASTVisitor {
@@ -11,6 +12,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitProgram(Program program, Object arg) throws PLCCompilerException {
+
         symbolTable.enterScope();
 
         // Handle the program type.
@@ -38,11 +40,21 @@ public class TypeCheckVisitor implements ASTVisitor {
 
         symbolTable.leaveScope();
 
-        return null;
+        return block;
     }
 
     @Override
     public Object visitNameDef(NameDef nameDef, Object arg) throws PLCCompilerException {
+        Dimension dChild = nameDef.getDimension();
+        Type tChild = nameDef.getType();
+
+        if (dChild != null) {
+            if (tChild == Type.IMAGE) {
+                // In progress
+            }
+        }
+
+        /*
         Type type = Type.kind2type(nameDef.getTypeToken().kind());
 
         // Check if Dimension is present.
@@ -60,6 +72,8 @@ public class TypeCheckVisitor implements ASTVisitor {
         symbolTable.insert(nameDef.getName());
 
         return type;
+        */
+        return null;
     }
 
     @Override
@@ -109,14 +123,14 @@ public class TypeCheckVisitor implements ASTVisitor {
     public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws PLCCompilerException {
         Expr leftExpr = binaryExpr.getLeftExpr();
         Expr rightExpr = binaryExpr.getRightExpr();
-        IToken operator = binaryExpr.getOp();
+        IToken op = binaryExpr.getOp();
 
         // Visit the left and right expressions
         Type leftType = (Type) leftExpr.visit(this, arg);
         Type rightType = (Type) rightExpr.visit(this, arg);
 
         // Determine the resulting type using inferBinaryType
-        Type resultType = inferBinaryType(leftType, operator, rightType);
+        Type resultType = inferBinaryType(leftType, op, rightType);
 
         if (resultType != null) {
             binaryExpr.setType(resultType);
@@ -344,9 +358,41 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
-        return null;
+        symbolTable.enterScope();
+
+        Object l = assignmentStatement.getlValue().visit(this, arg);
+        Object e = assignmentStatement.getE().visit(this, arg);
+
+        if (!assignmentCompatible(assignmentStatement.getlValue().getType(), assignmentStatement.getE().getType())) {
+            throw new TypeCheckException("Assignment incompatible.");
+        }
+
+        symbolTable.leaveScope();
+
+        return true;
+
     }
 
+    private boolean assignmentCompatible(Type lt, Type et){
+        if (lt == Type.PIXEL && et == Type.INT) {
+            return true;
+        }
+        else if (lt == Type.IMAGE && et == Type.PIXEL) {
+            return true;
+        }
+        else if (lt == Type.IMAGE && et == Type.INT) {
+            return true;
+        }
+        else if (lt == Type.IMAGE && et == Type.STRING) {
+            return true;
+        }
+        else if (et == lt) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
 
     @Override
     public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws PLCCompilerException {

@@ -4,8 +4,8 @@ import java.util.HashMap;
 import java.util.Stack;
 
 public class LeBlancSymbolTable {
-    int currentNum; // serial number of the current scope
-    int nextNum; // next serial number to assign
+    int currentNum; // Serial number of the current scope
+    int nextNum; // Next serial number to assign
     HashMap<String, Integer> symbolTable; // Symbol table to store entries
     Stack<Integer> scopeStack; // Stack to manage scope levels
 
