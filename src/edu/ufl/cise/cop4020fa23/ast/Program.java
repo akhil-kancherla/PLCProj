@@ -35,13 +35,41 @@ public class Program extends AST {
 	 * @param params
 	 * @param block
 	 */
-	public Program(IToken firstToken, IToken type, IToken name, List<NameDef> params, Block block) {
+	public Program(IToken firstToken, IToken type, IToken name, List<NameDef> params, Block block) throws PLCCompilerException {
 		super(firstToken);
 		this.typeToken = type;
 		this.nameToken = name;
 		this.params = params;
 		this.block = block;
+
+		// Set the type based on the typeToken
+		String typeText = typeToken.text().toLowerCase();
+		switch(typeText) {
+			case "void":
+				this.type = Type.VOID;
+				break;
+			case "int":
+				this.type = Type.INT;
+				break;
+			case "string":
+				this.type = Type.STRING;
+				break;
+			case "image":
+				this.type = Type.IMAGE;
+				break;
+			case "pixel":
+				this.type = Type.PIXEL;
+				break;
+			case "boolean":
+				this.type = Type.BOOLEAN;
+				break;
+			default:
+				// Handle or throw an error if the type is unrecognized
+				throw new PLCCompilerException("Unrecognized type: " + typeText);
+		}
 	}
+
+
 
 
 	@Override

@@ -17,7 +17,7 @@ import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
 /**
  * 
  */
-public class NameDef extends AST {
+public class NameDef extends Expr {
 	
 	final IToken typeToken;
 	final IToken identToken;
@@ -100,7 +100,7 @@ public class NameDef extends AST {
 	public String toString() {
 		return "NameDef [type=" + getType() + ", name=" + getName() + ", dimension=" + dimension + "]";
 	}
-
+	
 
 
 //	/**
