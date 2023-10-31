@@ -146,7 +146,15 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitDimension(Dimension dimension, Object arg) throws PLCCompilerException {
-        return null;
+        Expr widthExpr = dimension.getWidth();
+        Expr heightExpr = dimension.getHeight();
+        Type widthType = (Type) widthExpr.visit(this, arg);
+        Type heightType = (Type) heightExpr.visit(this, arg);
+        if (widthType == Type.INT && heightType == Type.INT) {
+            return Type.IMAGE;
+        } else {
+            throw new PLCCompilerException("Invalid types in Dimension.");
+        }
     }
 
     @Override
@@ -157,6 +165,7 @@ public class TypeCheckVisitor implements ASTVisitor {
         return null;
     }
 
+    //changed
     @Override
     public Object visitExpandedPixelExpr(ExpandedPixelExpr expandedPixelExpr, Object arg) throws PLCCompilerException {
         Type redType = (Type) expandedPixelExpr.getRed().visit(this, arg);
@@ -172,9 +181,16 @@ public class TypeCheckVisitor implements ASTVisitor {
     }
 
 
+    //changed
     @Override
     public Object visitGuardedBlock(GuardedBlock guardedBlock, Object arg) throws PLCCompilerException {
-        return null;
+        Type guardType = (Type) guardedBlock.getGuard().visit(this, arg);
+        if (guardType == Type.BOOLEAN) {
+            guardedBlock.getBlock().visit(this, arg);
+            return null;
+        } else {
+            throw new PLCCompilerException("Guard expression must have a BOOLEAN type.");
+        }
     }
 
     @Override
@@ -213,9 +229,20 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitNameDef(NameDef nameDef, Object arg) throws PLCCompilerException {
-        symbolTable.insert(nameDef.getName(), nameDef);
-
-        return nameDef.getType();
+        Type type = Type.kind2type(nameDef.getTypeToken().kind());
+        if (nameDef.getDimension() != null) {
+            if (type != Type.IMAGE) {
+                throw new PLCCompilerException("Type of NameDef should be IMAGE when Dimension is present.");
+            }
+        } else if (type != Type.INT && type != Type.BOOLEAN && type != Type.STRING && type != Type.PIXEL && type != Type.IMAGE) {
+            throw new PLCCompilerException("Invalid Type for NameDef.");
+        }
+        nameDef.setType(type);
+        symbolTable.insert(nameDef.getName(),nameDef);
+        return type;
+//        symbolTable.insert(nameDef.getName(), nameDef);
+//
+//        return nameDef.getType();
     }
 
 
@@ -306,22 +333,21 @@ public class TypeCheckVisitor implements ASTVisitor {
         Type operandType = (Type) unaryExpr.getExpr().visit(this, arg);
 
         switch (unaryExpr.getOp()) {
-            case RETURN:
+            case RETURN -> {
                 if (operandType != Type.INT) {
                     throw new TypeCheckException("Invalid type for '^' operation");
                 }
                 unaryExpr.setType(Type.INT);
                 return Type.INT;
-
-            case BANG:
+            }
+            case BANG -> {
                 if (operandType != Type.BOOLEAN) {
                     throw new TypeCheckException("Invalid type for '!' operation");
                 }
                 unaryExpr.setType(Type.BOOLEAN);
                 return Type.BOOLEAN;
-
-            default:
-                throw new TypeCheckException("Unknown unary operator: " + unaryExpr.getOp());
+            }
+            default -> throw new TypeCheckException("Unknown unary operator: " + unaryExpr.getOp());
         }
     }
 
