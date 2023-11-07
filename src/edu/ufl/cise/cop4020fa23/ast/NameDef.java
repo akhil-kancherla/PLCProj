@@ -23,6 +23,7 @@ public class NameDef extends Expr {
 	final IToken identToken;
 	final Dimension dimension;	
 	String javaName;
+	private boolean initialized = false;
 	
 	/**
 	 * @param firstToken
@@ -100,8 +101,14 @@ public class NameDef extends Expr {
 	public String toString() {
 		return "NameDef [type=" + getType() + ", name=" + getName() + ", dimension=" + dimension + "]";
 	}
-	
 
+	public boolean isInitialized() {
+		return initialized;
+	}
+
+	public void setInitialized(boolean initStatus) {
+		this.initialized = initStatus;
+	}
 
 //	/**
 //	 * @param string
