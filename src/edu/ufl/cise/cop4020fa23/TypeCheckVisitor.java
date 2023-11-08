@@ -43,7 +43,7 @@ public class TypeCheckVisitor implements ASTVisitor {
                     (Type) expandedPixelExpr.getBlue().visit(this, arg) == Type.INT)) {
                 throw new TypeCheckException("Invalid pixel expression types: red, green, and blue components must be of type INT.");
             }
-        } else if (!lhsType.equals(rhsType)) {
+        } else if (lhsType != (rhsType)) {
             // Check if the types are compatible for assignment for other cases
             throw new TypeCheckException("Type mismatch in assignment: " + lhsType + " cannot be assigned to " + rhsType);
         }
@@ -65,53 +65,72 @@ public class TypeCheckVisitor implements ASTVisitor {
 
         switch (binaryExpr.getOpKind()) {
             case DIV:
-                if (leftType.equals(Type.INT) && rightType.equals(Type.INT)) {
-                    resultType = Type.INT;
+                if ((leftType == (Type.INT) || leftType == (Type.PIXEL) || leftType == (Type.IMAGE)) && rightType == (leftType)) {
+                    resultType = leftType;
+                }
+                else if ((leftType == (Type.PIXEL) || leftType == (Type.IMAGE)) && rightType == (Type.INT)) {
+                    resultType = leftType;
                 }
                 break;
-            case AND:
-            case BITAND:
-                if (leftType.equals(Type.BOOLEAN) && rightType.equals(Type.BOOLEAN)) {
+            case AND, OR:
+                if (leftType == (Type.BOOLEAN) && rightType == (Type.BOOLEAN)) {
                     resultType = Type.BOOLEAN;
                 }
                 break;
-            case OR:
-            case BITOR:
-                if (leftType.equals(Type.BOOLEAN) && rightType.equals(Type.BOOLEAN)) {
-                    resultType = Type.BOOLEAN;
+            case BITAND, BITOR:
+                if (leftType == (Type.PIXEL) && rightType == (Type.PIXEL)) {
+                    resultType = Type.PIXEL;
                 }
                 break;
             case PLUS:
-                if (leftType.equals(Type.INT) && rightType.equals(Type.INT)) {
-                    resultType = Type.INT;
-                } else if (leftType.equals(Type.STRING) && rightType.equals(Type.STRING)) {
-                    resultType = Type.STRING;
+                if (rightType == (leftType)) {
+                    resultType = leftType;
                 }
                 break;
             case MINUS:
+                if ((leftType == (Type.INT) || leftType == (Type.PIXEL) || leftType == (Type.IMAGE)) && rightType == (leftType)) {
+                    resultType = leftType;
+                }
+                break;
             case TIMES:
+                if ((leftType == (Type.INT) || leftType == (Type.PIXEL) || leftType == (Type.IMAGE)) && rightType == (leftType)) {
+                    resultType = leftType;
+                }
+                else if ((leftType == (Type.PIXEL) || leftType == (Type.IMAGE)) && rightType == (Type.INT)) {
+                    resultType = leftType;
+                }
+                break;
             case EXP:
-                if (leftType.equals(Type.INT) && rightType.equals(Type.INT)) {
+                if (leftType == (Type.INT) && rightType == (Type.INT)) {
                     resultType = Type.INT;
+                }
+                else if (leftType == (Type.PIXEL) && rightType == (Type.INT)) {
+                    resultType = Type.PIXEL;
                 }
                 break;
             case EQ:
-            case LT:
-            case GT:
-            case LE:
-            case GE:
-                if (leftType.equals(Type.INT) && rightType.equals(Type.INT)) {
-                    resultType = Type.BOOLEAN;
-                } else {
-                    String op = binaryExpr.getOpKind().toString().toLowerCase();
-                    throw new TypeCheckException("The " + op + " operator requires operands of type INT.");
+                if (rightType == (leftType)) {
+                    resultType = leftType;
                 }
                 break;
-            case RARROW:
-                if (leftType.equals(rightType)) {
-                    resultType = leftType;
-                } else {
-                    throw new TypeCheckException("Incompatible types for '->' operator.");
+            case LT:
+                if (leftType == (Type.INT) && rightType == (Type.INT)) {
+                    resultType = Type.BOOLEAN;
+                }
+                break;
+            case GT:
+                if (leftType == (Type.INT) && rightType == (Type.INT)) {
+                    resultType = Type.BOOLEAN;
+                }
+                break;
+            case LE:
+                if (leftType == (Type.INT) && rightType == (Type.INT)) {
+                    resultType = Type.BOOLEAN;
+                }
+                break;
+            case GE:
+                if (leftType == (Type.INT) && rightType == (Type.INT)) {
+                    resultType = Type.BOOLEAN;
                 }
                 break;
             default:
@@ -296,7 +315,7 @@ public class TypeCheckVisitor implements ASTVisitor {
     public Object visitLValue(LValue lValue, Object arg) throws PLCCompilerException {
         NameDef nameDef = symbolTable.lookup(lValue.getName());
         if (nameDef == null) {
-            throw new PLCCompilerException("Variable not declared: " + lValue.getName());
+            throw new PLCCompilerException("Variable not declared (LValue): " + lValue.getName());
         }
 
         PixelSelector pixelSelector = lValue.getPixelSelector();
@@ -461,7 +480,7 @@ public class TypeCheckVisitor implements ASTVisitor {
         // Add the logic to identify if 'name' is a special identifier like 'z'
         // This might be a predefined list or some pattern that these identifiers follow
         // For example, if 'z' is the only special identifier, you can directly check for it
-        return "z".equals(name) || "b".equals(name) || "y".equals(name); // Adjust this condition based on your language's semantics
+        return "z" == (name) || "b" == (name) || "y" == (name); // Adjust this condition based on your language's semantics
     }
 
     private boolean isValidChannel(String channel) {
