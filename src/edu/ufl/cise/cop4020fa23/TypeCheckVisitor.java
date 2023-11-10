@@ -203,8 +203,8 @@ public class TypeCheckVisitor implements ASTVisitor {
         NameDef nameDef = declaration.getNameDef();
         if (declaration.getInitializer() != null) {
             // Check if the initializer type matches the declared variable's type or is a valid conversion
-            if (!(declaration.getInitializer().getType() == nameDef.getType()
-                    || (declaration.getInitializer().getType() == Type.STRING
+            if (!(declaration.getInitializer().visit(this, arg) == nameDef.getType()
+                    || (declaration.getInitializer().visit(this, arg) == Type.STRING
                     && nameDef.getType() == Type.IMAGE))) {
                 throw new TypeCheckException("Type mismatch in declaration: " + declaration.getInitializer().getType()
                         + " cannot be assigned to " + nameDef.getType());
