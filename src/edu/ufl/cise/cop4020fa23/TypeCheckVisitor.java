@@ -200,17 +200,28 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
-        declaration.getNameDef().visit(this, arg); // This should also handle type setting
-
+        NameDef nameDef = declaration.getNameDef();
         if (declaration.getInitializer() != null) {
-            Type initializerType = (Type) declaration.getInitializer().visit(this, arg);
-            declaration.getNameDef().setType(initializerType);
-            declaration.getNameDef().setInitialized(true); // Mark the variable as initialized
-        } else {
-            declaration.getNameDef().setType(Type.VOID);
+            // Check if the initializer type matches the declared variable's type or is a valid conversion
+            if (!(declaration.getInitializer().getType() == nameDef.getType()
+                    || (declaration.getInitializer().getType() == Type.STRING
+                    && nameDef.getType() == Type.IMAGE))) {
+                throw new TypeCheckException("Type mismatch in declaration: " + declaration.getInitializer().getType()
+                        + " cannot be assigned to " + nameDef.getType());
+            }
         }
 
-        symbolTable.insert(declaration.getNameDef().getName(), declaration.getNameDef());
+        nameDef.visit(this, arg); // This should also handle type setting
+
+        // Set the type for the variable as declared
+        nameDef.setType(nameDef.getType());
+
+        if (declaration.getInitializer() != null) {
+            // Mark the variable as initialized if there's an initializer
+            nameDef.setInitialized(true);
+        }
+
+        symbolTable.insert(nameDef.getName(), nameDef);
 
         return null;
     }
