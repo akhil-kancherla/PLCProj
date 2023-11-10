@@ -201,6 +201,18 @@ public class TypeCheckVisitor implements ASTVisitor {
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
         NameDef nameDef = declaration.getNameDef();
+
+        // Check for duplicate declarations
+        if (symbolTable.lookup(nameDef.getName()) != null) {
+            if (symbolTable.lookup(nameDef.getName()) != nameDef) {
+                // It's the same variable, not a duplicate
+                return null;
+            }
+            else {
+                throw new TypeCheckException("Duplicate declaration: " + nameDef.getName());
+            }
+        }
+
         if (declaration.getInitializer() != null) {
             // Check if the initializer type matches the declared variable's type or is a valid conversion
             if (!(declaration.getInitializer().visit(this, arg) == nameDef.getType()
@@ -221,6 +233,7 @@ public class TypeCheckVisitor implements ASTVisitor {
             nameDef.setInitialized(true);
         }
 
+        // Insert the variable into the symbol table
         symbolTable.insert(nameDef.getName(), nameDef);
 
         return null;
