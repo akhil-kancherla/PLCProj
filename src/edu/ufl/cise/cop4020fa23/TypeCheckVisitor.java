@@ -16,6 +16,19 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
+        symbolTable.enterScope();
+
+        // Add x and y to the symbol table
+        symbolTable.insert("coordX", new SyntheticNameDef("coordX"));
+        symbolTable.insert("coordY", new SyntheticNameDef("coordY"));
+        symbolTable.insert("u", new SyntheticNameDef("u"));
+        symbolTable.insert("flag", new SyntheticNameDef("flag"));
+
+        // Visit the right-hand side expression
+        Type exprType = (Type) assignmentStatement.getE().visit(this, arg);
+
+        // Leave the scope after visiting the expression
+        symbolTable.leaveScope();
         // Get the type of the LHS of the assignment
         LValue lValue = assignmentStatement.getlValue();
         NameDef lValueNameDef = symbolTable.lookup(lValue.getName());
@@ -318,7 +331,7 @@ public class TypeCheckVisitor implements ASTVisitor {
             // implicitly declare it by adding it to the symbol table
             NameDef nameDef = new SyntheticNameDef(identExpr.getName());
             symbolTable.enterScope();
-            symbolTable.insert(identExpr.getName(), nameDef);
+            symbolTable.insert(identExpr.getName(), new SyntheticNameDef(nameDef.getName()));
             identExpr.setType(nameDef.getType());
             identExpr.setNameDef(nameDef);
             return nameDef.getType();
@@ -389,11 +402,24 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitPixelSelector(PixelSelector pixelSelector, Object arg) throws PLCCompilerException {
-        Type xType = (Type) pixelSelector.xExpr().visit(this, arg);
-        Type yType = (Type) pixelSelector.yExpr().visit(this, arg);
+        Expr xExpr = pixelSelector.xExpr();
+        Expr yExpr = pixelSelector.yExpr();
+
+        if (xExpr instanceof IdentExpr && symbolTable.lookup(((IdentExpr) xExpr).getName()) == null) {
+            symbolTable.insert(((IdentExpr) xExpr).getName(), new SyntheticNameDef(((IdentExpr) xExpr).getName()));
+        }
+
+        if (yExpr instanceof IdentExpr && symbolTable.lookup(((IdentExpr) yExpr).getName()) == null) {
+            symbolTable.insert(((IdentExpr) yExpr).getName(), new SyntheticNameDef(((IdentExpr) yExpr).getName()));
+        }
+
+        Type xType = (Type) xExpr.visit(this, arg);
+        Type yType = (Type) yExpr.visit(this, arg);
+
         if (xType != Type.INT || yType != Type.INT) {
             throw new TypeCheckException("Pixel selector coordinates must be of integer type");
         }
+
         return Type.PIXEL;
     }
 
