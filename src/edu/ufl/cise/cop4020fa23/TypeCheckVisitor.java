@@ -203,9 +203,12 @@ public class TypeCheckVisitor implements ASTVisitor {
         NameDef nameDef = declaration.getNameDef();
 
         // Check for duplicate declarations
-        if (symbolTable.lookup(nameDef.getName()) != null) {
+        if (symbolTable.lookup(nameDef.getName()) != null) { // if it's in the symbol table
             if (symbolTable.lookup(nameDef.getName()) != nameDef) {
                 // It's the same variable, not a duplicate
+                return null;
+            }
+            else if (symbolTable.lookup(nameDef.getName()).getType() == nameDef.getType()) {
                 return null;
             }
             else {
@@ -222,7 +225,6 @@ public class TypeCheckVisitor implements ASTVisitor {
                         + " cannot be assigned to " + nameDef.getType());
             }
         }
-
         nameDef.visit(this, arg); // This should also handle type setting
 
         // Set the type for the variable as declared
@@ -311,6 +313,15 @@ public class TypeCheckVisitor implements ASTVisitor {
         if (isSpecialIdentifier(identExpr.getName())) {
             identExpr.setType(Type.INT);
             return Type.INT;
+        } else if (arg instanceof PixelSelector && ((PixelSelector) arg).isInLValueContext()) {
+            // If the identifier is used in a pixel selector in an LValue context,
+            // implicitly declare it by adding it to the symbol table
+            NameDef nameDef = new SyntheticNameDef(identExpr.getName());
+            symbolTable.enterScope();
+            symbolTable.insert(identExpr.getName(), nameDef);
+            identExpr.setType(nameDef.getType());
+            identExpr.setNameDef(nameDef);
+            return nameDef.getType();
         } else {
             // Otherwise, proceed as normal
             NameDef nameDef = symbolTable.lookup(identExpr.getName());

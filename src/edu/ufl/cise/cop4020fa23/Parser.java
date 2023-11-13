@@ -238,7 +238,7 @@ public class Parser implements IParser {
 
 			PixelSelector pixelSelector = null;
 			if (currentToken.kind() == Kind.LSQUARE) {
-				pixelSelector = pixelSelector();
+				pixelSelector = pixelSelector(true); // Pass true to pixelSelector function
 			}
 
 			ChannelSelector channelSelector = null;
@@ -252,7 +252,8 @@ public class Parser implements IParser {
 		}
 	}
 
-	private PixelSelector pixelSelector() throws PLCCompilerException {
+
+	private PixelSelector pixelSelector(boolean isInLValueContext) throws PLCCompilerException {
 		match(Kind.LSQUARE);
 		Expr xCoord = expr();
 		match(Kind.COMMA);
@@ -261,8 +262,9 @@ public class Parser implements IParser {
 			throw new SyntaxException("Unexpected COMMA after second expression in pixel selector.");
 		}
 		match(Kind.RSQUARE);
-		return new PixelSelector(currentToken, xCoord, yCoord);
+		return new PixelSelector(currentToken, xCoord, yCoord, isInLValueContext);
 	}
+
 
 	private ChannelSelector channelSelector() throws PLCCompilerException {
 		IToken channelToken = currentToken;
@@ -415,7 +417,7 @@ public class Parser implements IParser {
 			match(COMMA);
 			Expr y = expr();
 			match(RSQUARE);
-			pixelSelector = new PixelSelector(firstTokenForPixelSelector, x, y);
+			pixelSelector = new PixelSelector(firstTokenForPixelSelector, x, y, false); // Pass false to PixelSelector constructor
 		}
 		if (currentToken.kind() == COLON) {
 			IToken firstTokenForChannelSelector = currentToken;
@@ -430,6 +432,7 @@ public class Parser implements IParser {
 
 		return e;
 	}
+
 
 	private Expr expandedPixelExpr() throws PLCCompilerException {
 		if (currentToken.kind() == LSQUARE) {

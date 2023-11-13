@@ -19,6 +19,8 @@ public class PixelSelector extends AST {
 	final Expr xExpr;
 	final Expr yExpr;
 
+	private boolean isInLValueContext;
+
 	@Override
 	public Object visit(ASTVisitor v, Object arg) throws PLCCompilerException {
 		return v.visitPixelSelector(this, arg);
@@ -29,10 +31,11 @@ public class PixelSelector extends AST {
 	 * @param xExpr
 	 * @param yExpr
 	 */
-	public PixelSelector(IToken firstToken, Expr xExpr, Expr yExpr) {
+	public PixelSelector(IToken firstToken, Expr xExpr, Expr yExpr, boolean isInLValueContext) {
 		super(firstToken);
 		this.xExpr = xExpr;
 		this.yExpr = yExpr;
+		this.isInLValueContext = isInLValueContext; // Initialize the field
 	}
 
 	@Override
@@ -51,6 +54,10 @@ public class PixelSelector extends AST {
 			return false;
 		PixelSelector other = (PixelSelector) obj;
 		return Objects.equals(xExpr, other.xExpr) && Objects.equals(yExpr, other.yExpr);
+	}
+
+	public boolean isInLValueContext() {
+		return isInLValueContext; // Add this getter method
 	}
 
 	@Override

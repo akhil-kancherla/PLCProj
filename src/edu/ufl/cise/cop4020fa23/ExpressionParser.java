@@ -194,7 +194,7 @@ public class ExpressionParser implements IParser {
 			match(COMMA);
 			Expr y = expr();
 			match(RSQUARE);
-			pixelSelector = new PixelSelector(firstTokenForPixelSelector, x, y);
+			pixelSelector = new PixelSelector(firstTokenForPixelSelector, x, y, false);
 		}
 		if (currentToken.kind() == COLON) {
 			IToken firstTokenForChannelSelector = currentToken;
