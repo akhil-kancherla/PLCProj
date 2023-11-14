@@ -57,27 +57,10 @@ public class CodeGenVisitor implements ASTVisitor {
 
           return code.toString();
 
-//        String packageName = (String) arg;
-//
-//        // Add package declaration if a package name is provided
-//        if (packageName != null && !packageName.isEmpty()) {
-//            javaCode.append("package ").append(packageName).append(";\n");
-//        }
-//
-//        // Add class declaration
-//        javaCode.append("class GeneratedClass {\n");
-//
-//        // Visit the block of the program
-//        javaCode.append((String) program.getBlock().visit(this, arg));
-//
-//        // Close class declaration
-//        javaCode.append("}\n");
-//
-//        return javaCode.toString();
     }
 
     public boolean isReservedWord(String word) {
-        String[] reservedWords = {"image", "pixel", "int", "string", "void", "boolean", "write", "height", "width", "if", "fi", "do", "od", "red", "green", "blue"};
+        String[] reservedWords = {"true", "false", "image", "pixel", "int", "string", "void", "boolean", "write", "height", "width", "if", "fi", "do", "od", "red", "green", "blue"};
         for (String reservedWord : reservedWords) {
             if (reservedWord.equals(word)) {
                 return true;
@@ -88,7 +71,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
-        String varName = getUniqueName(assignmentStatement.getlValue().getName());
+        String varName = assignmentStatement.getlValue().getName();
         String exprCode = (String) assignmentStatement.getE().visit(this, arg);
         return varName + " = " + exprCode + ";\n";
     }
@@ -132,7 +115,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
-        String varName = getUniqueName(declaration.getNameDef().getName());
+        String varName = declaration.getNameDef().getName();
         return declaration.getNameDef().getType() + " " + varName + ";\n";
     }
 
@@ -174,7 +157,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCCompilerException {
-        return getUniqueName(identExpr.getName());
+        return identExpr.getName();
     }
 
     @Override
