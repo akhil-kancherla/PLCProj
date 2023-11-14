@@ -89,6 +89,9 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws PLCCompilerException {
         String leftExprCode = (String) binaryExpr.getLeftExpr().visit(this, arg);
         String rightExprCode = (String) binaryExpr.getRightExpr().visit(this, arg);
+        if (binaryExpr.getOpKind() == Kind.EXP) {
+            return "((int)Math.round(Math.pow(" + leftExprCode + "," + rightExprCode + ")))";
+        }
         return leftExprCode + " " + binaryExpr.getOp().text() + " " + rightExprCode;
     }
 
