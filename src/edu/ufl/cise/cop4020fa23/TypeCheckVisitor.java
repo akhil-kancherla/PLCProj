@@ -513,6 +513,13 @@ public class TypeCheckVisitor implements ASTVisitor {
                 unaryExpr.setType(Type.BOOLEAN);
                 return Type.BOOLEAN;
 
+            case MINUS:
+                if (operandType != Type.INT) {
+                    throw new TypeCheckException("Invalid type for '-' operation");
+                }
+                unaryExpr.setType(Type.INT);
+                return Type.INT;
+
             default:
                 throw new TypeCheckException("Unknown unary operator: " + unaryExpr.getOp());
         }

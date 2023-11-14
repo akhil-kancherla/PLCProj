@@ -27,7 +27,7 @@ public class CodeGenVisitor implements ASTVisitor {
           String className = program.getName();
           code.append("public class ").append(className).append(" {\n");
 
-          String returnType = program.getType().toString().toLowerCase();
+          String returnType = convertType(program.getType());
           System.out.println(returnType);
           code.append("    public static ").append(returnType).append(" apply(");
 
@@ -40,10 +40,10 @@ public class CodeGenVisitor implements ASTVisitor {
               }
 
               if (isReservedWord(param.getName())) {
-                  code.append(program.getType().toString().toLowerCase()).append(" ").append(param.getName()).append("$" + i);
+                  code.append(convertType(param.getType())).append(" ").append(param.getName()).append("$" + i);
               }
               else {
-                  code.append(program.getType().toString().toLowerCase()).append(" ").append(param.getName());
+                  code.append(convertType(param.getType())).append(" ").append(param.getName());
               }
           }
 
@@ -57,6 +57,15 @@ public class CodeGenVisitor implements ASTVisitor {
 
           return code.toString();
 
+    }
+
+    private String convertType(Type type) {
+        if (type == Type.STRING) {
+            return "String";
+        }
+        else {
+            return type.toString().toLowerCase();
+        }
     }
 
     public boolean isReservedWord(String word) {
@@ -219,6 +228,12 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitUnaryExpr(UnaryExpr unaryExpr, Object arg) throws PLCCompilerException {
         String exprCode = (String) unaryExpr.getExpr().visit(this, arg);
+        if (unaryExpr.getOp() == Kind.MINUS) {
+            return "-" + exprCode;
+        }
+        else if (unaryExpr.getOp() == Kind.BANG) {
+            return "!" + exprCode;
+        }
         return unaryExpr.getOp() + exprCode;
     }
 
