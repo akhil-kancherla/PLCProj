@@ -35,4 +35,12 @@ public class LeBlancSymbolTable {
         System.out.println(name + " not found in any scope.");
         return null;
     }
+
+    public NameDef lookupScope(String name) {
+        NameDef def = scopes.peek().get(name);
+        if (def!=null) {
+            return def;
+        }
+        return null;
+    }
 }

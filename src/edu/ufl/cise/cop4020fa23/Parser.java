@@ -165,10 +165,18 @@ public class Parser implements IParser {
 		if (currentToken.kind() == Kind.ASSIGN) {
 			match(Kind.ASSIGN);
 			initializer = expr();
+			// Check if the initializer is a valid expression for the variable type
+			if (nameDef.getIdentToken().kind() == Kind.RES_int && initializer instanceof PostfixExpr) {
+				PostfixExpr postfixExpr = (PostfixExpr) initializer;
+				if (postfixExpr.pixel() != null || postfixExpr.channel() != null) {
+					throw new SyntaxException("Invalid assignment to variable " + nameDef.getName());
+				}
+			}
 		}
 		match(Kind.SEMI);
 		return new Declaration(startToken, nameDef, initializer);
 	}
+
 
 	private Statement statement() throws PLCCompilerException {
 		switch (currentToken.kind()) {
@@ -459,20 +467,6 @@ public class Parser implements IParser {
 			case IDENT -> {
 				e = new IdentExpr(currentToken);
 				match(IDENT);
-
-				if (currentToken.kind() == COLON) {
-					IToken firstTokenForChannelSelector = currentToken;
-					match(COLON);
-
-					if (Arrays.asList(RES_red, RES_green, RES_blue).contains(currentToken.kind())) {
-						IToken colorToken = currentToken;
-						match(colorToken.kind());
-						ChannelSelector channelSelector = new ChannelSelector(firstTokenForChannelSelector, colorToken);
-						e = new PostfixExpr(e.firstToken(), e, null, channelSelector);
-					} else {
-						throw new SyntaxException("Expected color (red, green, blue) after COLON but found " + currentToken.kind());
-					}
-				}
 			}
 			case NUM_LIT -> {
 				e = new NumLitExpr(currentToken);
@@ -500,8 +494,13 @@ public class Parser implements IParser {
 			}
 			default -> throw new SyntaxException("Unexpected token: " + currentToken);
 		}
+		// Check if there is a COLON after a NUM_LIT, which is invalid
+		if (e instanceof NumLitExpr && currentToken.kind() == COLON) {
+			throw new SyntaxException("Invalid token COLON after NUM_LIT");
+		}
 		return e;
 	}
+
 
 	private void match(Kind expected) throws PLCCompilerException {
 		if (currentToken.kind() == expected) {

@@ -76,86 +76,94 @@ public class TypeCheckVisitor implements ASTVisitor {
         Type rightType = (Type) binaryExpr.getRightExpr().visit(this, arg);
         Type resultType = null;
 
-        switch (binaryExpr.getOpKind()) {
-            case DIV:
-                if ((leftType == (Type.INT) || leftType == (Type.PIXEL) || leftType == (Type.IMAGE)) && rightType == (leftType)) {
-                    resultType = leftType;
-                }
-                else if ((leftType == (Type.PIXEL) || leftType == (Type.IMAGE)) && rightType == (Type.INT)) {
-                    resultType = leftType;
-                }
-                break;
-            case AND, OR:
-                if (leftType == (Type.BOOLEAN) && rightType == (Type.BOOLEAN)) {
-                    resultType = Type.BOOLEAN;
-                }
-                break;
-            case BITAND, BITOR:
-                if (leftType == (Type.PIXEL) && rightType == (Type.PIXEL)) {
-                    resultType = Type.PIXEL;
-                }
-                break;
-            case PLUS:
-                if (rightType == (leftType)) {
-                    resultType = leftType;
-                }
-                break;
-            case MINUS:
-                if ((leftType == (Type.INT) || leftType == (Type.PIXEL) || leftType == (Type.IMAGE)) && rightType == (leftType)) {
-                    resultType = leftType;
-                }
-                break;
-            case TIMES:
-                if ((leftType == (Type.INT) || leftType == (Type.PIXEL) || leftType == (Type.IMAGE)) && rightType == (leftType)) {
-                    resultType = leftType;
-                }
-                else if ((leftType == (Type.PIXEL) || leftType == (Type.IMAGE)) && rightType == (Type.INT)) {
-                    resultType = leftType;
-                }
-                break;
-            case EXP:
-                if (leftType == (Type.INT) && rightType == (Type.INT)) {
-                    resultType = Type.INT;
-                }
-                else if (leftType == (Type.PIXEL) && rightType == (Type.INT)) {
-                    resultType = Type.PIXEL;
-                }
-                break;
-            case EQ:
-                if (rightType == (leftType)) {
-                    resultType = leftType;
-                }
-                break;
-            case LT:
-                if (leftType == (Type.INT) && rightType == (Type.INT)) {
-                    resultType = Type.BOOLEAN;
-                }
-                break;
-            case GT:
-                if (leftType == (Type.INT) && rightType == (Type.INT)) {
-                    resultType = Type.BOOLEAN;
-                }
-                break;
-            case LE:
-                if (leftType == (Type.INT) && rightType == (Type.INT)) {
-                    resultType = Type.BOOLEAN;
-                }
-                break;
-            case GE:
-                if (leftType == (Type.INT) && rightType == (Type.INT)) {
-                    resultType = Type.BOOLEAN;
-                }
-                break;
-            default:
-                throw new TypeCheckException("Unknown binary operator");
+        if (leftType == null || rightType == null || leftType != rightType) {
+            throw new TypeCheckException();
         }
 
-        if (resultType == null) {
-            throw new TypeCheckException("Type mismatch or unsupported operation in binary expression.");
-        }
 
-        binaryExpr.setType(resultType);
-        return resultType;
+            switch (binaryExpr.getOpKind()) {
+                case DIV:
+                    if ((leftType == (Type.INT) || leftType == (Type.PIXEL) || leftType == (Type.IMAGE)) && rightType == (leftType)) {
+                        resultType = leftType;
+                    }
+                    else if ((leftType == (Type.PIXEL) || leftType == (Type.IMAGE)) && rightType == (Type.INT)) {
+                        resultType = leftType;
+                    }
+                    break;
+                case AND, OR:
+                    if (leftType == (Type.BOOLEAN) && rightType == (Type.BOOLEAN)) {
+                        resultType = Type.BOOLEAN;
+                    }
+                    break;
+                case BITAND, BITOR:
+                    if (leftType == (Type.PIXEL) && rightType == (Type.PIXEL)) {
+                        resultType = Type.PIXEL;
+                    }
+                    break;
+                case PLUS:
+                    if (rightType == (leftType)) {
+                        resultType = leftType;
+                    }
+                    break;
+                case MINUS:
+                    if ((leftType == (Type.INT) || leftType == (Type.PIXEL) || leftType == (Type.IMAGE)) && rightType == (leftType)) {
+                        resultType = leftType;
+                    }
+                    break;
+                case TIMES:
+                    if ((leftType == (Type.INT) || leftType == (Type.PIXEL) || leftType == (Type.IMAGE)) && rightType == (leftType)) {
+                        resultType = leftType;
+                    }
+                    else if ((leftType == (Type.PIXEL) || leftType == (Type.IMAGE)) && rightType == (Type.INT)) {
+                        resultType = leftType;
+                    }
+                    break;
+                case EXP:
+                    if (leftType == (Type.INT) && rightType == (Type.INT)) {
+                        resultType = Type.INT;
+                    }
+                    else if (leftType == (Type.PIXEL) && rightType == (Type.INT)) {
+                        resultType = Type.PIXEL;
+                    }
+                    break;
+                case EQ:
+                    if (rightType == (leftType)) {
+                        resultType = leftType;
+                    }
+                    break;
+                case LT:
+                    if (leftType == (Type.INT) && rightType == (Type.INT)) {
+                        resultType = Type.BOOLEAN;
+                    }
+                    break;
+                case GT:
+                    if (leftType == (Type.INT) && rightType == (Type.INT)) {
+                        resultType = Type.BOOLEAN;
+                    }
+                    break;
+                case LE:
+                    if (leftType == (Type.INT) && rightType == (Type.INT)) {
+                        resultType = Type.BOOLEAN;
+                    }
+                    break;
+                case GE:
+                    if (leftType == (Type.INT) && rightType == (Type.INT)) {
+                        resultType = Type.BOOLEAN;
+                    }
+                    break;
+                default:
+                    throw new TypeCheckException("Unknown binary operator");
+            }
+
+            if (resultType != null) {
+                binaryExpr.setType(resultType);
+                return resultType;
+            }
+
+
+
+
+        throw new TypeCheckException();
     }
 
 
@@ -214,44 +222,21 @@ public class TypeCheckVisitor implements ASTVisitor {
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
         NameDef nameDef = declaration.getNameDef();
+        Expr e = declaration.getInitializer();
 
-        // Check for duplicate declarations
-        if (symbolTable.lookup(nameDef.getName()) != null) { // if it's in the symbol table
-            if (symbolTable.lookup(nameDef.getName()) != nameDef) {
-                // It's the same variable, not a duplicate
-                return null;
-            }
-            else if (symbolTable.lookup(nameDef.getName()).getType() == nameDef.getType()) {
-                return null;
-            }
-            else {
-                throw new TypeCheckException("Duplicate declaration: " + nameDef.getName());
-            }
+        if (e != null) {
+            e.visit(this, arg);
         }
-
-        if (declaration.getInitializer() != null) {
-            // Check if the initializer type matches the declared variable's type or is a valid conversion
-            if (!(declaration.getInitializer().visit(this, arg) == nameDef.getType()
-                    || (declaration.getInitializer().visit(this, arg) == Type.STRING
-                    && nameDef.getType() == Type.IMAGE))) {
-                throw new TypeCheckException("Type mismatch in declaration: " + declaration.getInitializer().getType()
-                        + " cannot be assigned to " + nameDef.getType());
-            }
-        }
-        nameDef.visit(this, arg); // This should also handle type setting
-
-        // Set the type for the variable as declared
-        nameDef.setType(nameDef.getType());
-
-        if (declaration.getInitializer() != null) {
-            // Mark the variable as initialized if there's an initializer
-            nameDef.setInitialized(true);
+        nameDef.visit(this, arg);
+        if (!(e == null || e.getType() == nameDef.getType() || (e.getType() == Type.STRING && nameDef.getType() == Type.IMAGE))) {
+            throw new TypeCheckException();
         }
 
         // Insert the variable into the symbol table
         symbolTable.insert(nameDef.getName(), nameDef);
 
-        return null;
+        return nameDef.getType();
+
     }
 
 
@@ -384,6 +369,29 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitNameDef(NameDef nameDef, Object arg) throws PLCCompilerException {
+//        Dimension d = nameDef.getDimension();
+//        Type t = nameDef.getType();
+//
+//        if (d!=null) {
+//            d.visit(this, arg);
+//            if (!(t == Type.IMAGE)) {
+//                throw new TypeCheckException();
+//            }
+//        }
+//        else {
+//            if (!(t == Type.IMAGE || t == Type.BOOLEAN || t == Type.STRING || t == Type.PIXEL || t == Type.IMAGE)) {
+//                throw new TypeCheckException();
+//            }
+//        }
+//
+//        if (symbolTable.lookupScope(nameDef.getName()) != null) {
+//            throw new TypeCheckException();
+//        }
+//        else {
+//            symbolTable.insert(nameDef.getName(), nameDef);
+//        }
+//
+//        return t;
         symbolTable.insert(nameDef.getName(), nameDef);
 
         if(nameDef.getDimension() != null){
