@@ -2,6 +2,7 @@ package edu.ufl.cise.cop4020fa23;
 
 import edu.ufl.cise.cop4020fa23.ast.*;
 import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
+import edu.ufl.cise.cop4020fa23.runtime.ConsoleIO;
 
 import java.util.List;
 
@@ -243,8 +244,9 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws PLCCompilerException {
         String exprCode = (String) writeStatement.getExpr().visit(this, arg);
-        return "System.out.println(" + exprCode + ");\n";
+        return "ConsoleIO.write(" + exprCode + ");\n";
     }
+
 
     @Override
     public Object visitBooleanLitExpr(BooleanLitExpr booleanLitExpr, Object arg) throws PLCCompilerException {
