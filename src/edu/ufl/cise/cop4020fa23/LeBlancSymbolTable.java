@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Stack;
 
 public class LeBlancSymbolTable {
-    private Stack<HashMap<String, NameDef>> scopes = new Stack<>();
+    private Stack<Map<String, NameDef>> scopes = new Stack<>();
 
     public void enterScope() {
         System.out.println("Entering a new scope.");

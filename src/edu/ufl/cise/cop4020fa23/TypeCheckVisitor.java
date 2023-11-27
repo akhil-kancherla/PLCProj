@@ -18,17 +18,11 @@ public class TypeCheckVisitor implements ASTVisitor {
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
         symbolTable.enterScope();
 
-        // Add x and y to the symbol table
-//        symbolTable.insert("coordX", new SyntheticNameDef("coordX"));
-//        symbolTable.insert("coordY", new SyntheticNameDef("coordY"));
-//        symbolTable.insert("u", new SyntheticNameDef("u"));
-//        symbolTable.insert("flag", new SyntheticNameDef("flag"));
-
         // Visit the right-hand side expression
-        Type exprType = (Type) assignmentStatement.getE().visit(this, arg);
+        //Type exprType = (Type) assignmentStatement.getE().visit(this, arg);
 
         // Leave the scope after visiting the expression
-        symbolTable.leaveScope();
+        //symbolTable.leaveScope();
         // Get the type of the LHS of the assignment
         LValue lValue = assignmentStatement.getlValue();
         NameDef lValueNameDef = symbolTable.lookup(lValue.getName());
@@ -63,6 +57,8 @@ public class TypeCheckVisitor implements ASTVisitor {
 
         // If the variable is declared, set it as initialized
         lValueNameDef.setInitialized(true);
+
+        symbolTable.leaveScope();
 
         return null;
     }
@@ -265,6 +261,32 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCCompilerException {
+//        if (isSpecialIdentifier(identExpr.getName())) {
+//            identExpr.setType(Type.INT);
+//            return Type.INT;
+//        } else if (arg instanceof PixelSelector && ((PixelSelector) arg).isInLValueContext()) {
+//            // If the identifier is used in a pixel selector in an LValue context,
+//            // implicitly declare it by adding it to the symbol table
+//            NameDef nameDef = new SyntheticNameDef(identExpr.getName());
+//            symbolTable.enterScope();
+//            symbolTable.insert(identExpr.getName(), new SyntheticNameDef(nameDef.getName()));
+//            identExpr.setType(nameDef.getType());
+//            identExpr.setNameDef(nameDef);
+//            symbolTable.leaveScope(); // Leave the scope after inserting
+//            return nameDef.getType();
+//        } else {
+//            // Otherwise, proceed as normal
+//            NameDef nameDef = symbolTable.lookup(identExpr.getName());
+//            if (nameDef == null) {
+//                // Dynamically insert the variable into the symbol table
+//                symbolTable.insert(identExpr.getName(), new SyntheticNameDef(identExpr.getName()));
+//                nameDef = symbolTable.lookup(identExpr.getName());
+//            }
+//            identExpr.setType(nameDef.getType());
+//            identExpr.setNameDef(nameDef);
+//            return nameDef.getType();
+//        }
+
         if (isSpecialIdentifier(identExpr.getName())) {
             identExpr.setType(Type.INT);
             return Type.INT;
