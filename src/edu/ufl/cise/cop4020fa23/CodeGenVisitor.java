@@ -225,14 +225,14 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitStringLitExpr(StringLitExpr stringLitExpr, Object arg) throws PLCCompilerException {
-        return "\"" + stringLitExpr.getText() + "\"";
+        return stringLitExpr.getText();
     }
 
     @Override
     public Object visitUnaryExpr(UnaryExpr unaryExpr, Object arg) throws PLCCompilerException {
         String exprCode = (String) unaryExpr.getExpr().visit(this, arg);
         if (unaryExpr.getOp() == Kind.MINUS) {
-            return "-" + exprCode;
+            return "-" + "(" + exprCode + ")";
         }
         else if (unaryExpr.getOp() == Kind.BANG) {
             return "!" + exprCode;

@@ -19,10 +19,10 @@ public class TypeCheckVisitor implements ASTVisitor {
         symbolTable.enterScope();
 
         // Add x and y to the symbol table
-        symbolTable.insert("coordX", new SyntheticNameDef("coordX"));
-        symbolTable.insert("coordY", new SyntheticNameDef("coordY"));
-        symbolTable.insert("u", new SyntheticNameDef("u"));
-        symbolTable.insert("flag", new SyntheticNameDef("flag"));
+//        symbolTable.insert("coordX", new SyntheticNameDef("coordX"));
+//        symbolTable.insert("coordY", new SyntheticNameDef("coordY"));
+//        symbolTable.insert("u", new SyntheticNameDef("u"));
+//        symbolTable.insert("flag", new SyntheticNameDef("flag"));
 
         // Visit the right-hand side expression
         Type exprType = (Type) assignmentStatement.getE().visit(this, arg);
@@ -82,88 +82,45 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 
             switch (binaryExpr.getOpKind()) {
-                case DIV:
-                    if ((leftType == (Type.INT) || leftType == (Type.PIXEL) || leftType == (Type.IMAGE)) && rightType == (leftType)) {
-                        resultType = leftType;
-                    }
-                    else if ((leftType == (Type.PIXEL) || leftType == (Type.IMAGE)) && rightType == (Type.INT)) {
-                        resultType = leftType;
-                    }
-                    break;
-                case AND, OR:
-                    if (leftType == (Type.BOOLEAN) && rightType == (Type.BOOLEAN)) {
-                        resultType = Type.BOOLEAN;
-                    }
-                    break;
-                case BITAND, BITOR:
-                    if (leftType == (Type.PIXEL) && rightType == (Type.PIXEL)) {
-                        resultType = Type.PIXEL;
-                    }
-                    break;
-                case PLUS:
-                    if (rightType == (leftType)) {
-                        resultType = leftType;
-                    }
-                    break;
-                case MINUS:
-                    if ((leftType == (Type.INT) || leftType == (Type.PIXEL) || leftType == (Type.IMAGE)) && rightType == (leftType)) {
-                        resultType = leftType;
-                    }
-                    break;
-                case TIMES:
-                    if ((leftType == (Type.INT) || leftType == (Type.PIXEL) || leftType == (Type.IMAGE)) && rightType == (leftType)) {
-                        resultType = leftType;
-                    }
-                    else if ((leftType == (Type.PIXEL) || leftType == (Type.IMAGE)) && rightType == (Type.INT)) {
-                        resultType = leftType;
-                    }
-                    break;
-                case EXP:
-                    if (leftType == (Type.INT) && rightType == (Type.INT)) {
-                        resultType = Type.INT;
-                    }
-                    else if (leftType == (Type.PIXEL) && rightType == (Type.INT)) {
-                        resultType = Type.PIXEL;
-                    }
-                    break;
-                case EQ:
-                    if (rightType == (leftType)) {
-                        resultType = leftType;
-                    }
-                    break;
-                case LT:
-                    if (leftType == (Type.INT) && rightType == (Type.INT)) {
-                        resultType = Type.BOOLEAN;
-                    }
-                    break;
-                case GT:
-                    if (leftType == (Type.INT) && rightType == (Type.INT)) {
-                        resultType = Type.BOOLEAN;
-                    }
-                    break;
-                case LE:
-                    if (leftType == (Type.INT) && rightType == (Type.INT)) {
-                        resultType = Type.BOOLEAN;
-                    }
-                    break;
-                case GE:
-                    if (leftType == (Type.INT) && rightType == (Type.INT)) {
-                        resultType = Type.BOOLEAN;
-                    }
-                    break;
-                default:
-                    throw new TypeCheckException("Unknown binary operator");
+                case BITAND, BITOR -> {
+                    if(leftType == Type.PIXEL && rightType == Type.PIXEL) resultType = Type.PIXEL;
+                    else throw new TypeCheckException(binaryExpr.firstToken.sourceLocation(), "BITAND or BITOR operation on invalid types of: " + leftType + ", " + rightType);
+                }
+                case AND, OR -> {
+                    if(leftType == Type.BOOLEAN && rightType == Type.BOOLEAN) resultType = Type.BOOLEAN;
+                    else throw new TypeCheckException(binaryExpr.firstToken.sourceLocation(), "AND or OR operation on invalid types of: " + leftType + ", " + rightType);
+
+                }
+                case LT, GT, LE, GE -> {
+                    if(leftType == Type.INT && rightType == Type.INT) resultType = Type.BOOLEAN;
+                    else throw new TypeCheckException(binaryExpr.firstToken.sourceLocation(), "comparison operation on invalid types of: " + leftType + ", " + rightType);
+
+                }
+                case EQ -> {
+                    if(leftType == rightType) resultType = Type.BOOLEAN;
+                    else throw new TypeCheckException(binaryExpr.firstToken.sourceLocation(), "comparison operation on invalid types of: " + leftType + ", " + rightType);
+
+                }
+                case EXP-> {
+                    if(leftType == Type.INT && rightType == Type.INT) resultType = Type.INT;
+                    else throw new TypeCheckException(binaryExpr.firstToken.sourceLocation(), "EXP operation on invalid types of: " + leftType + ", " + rightType);
+
+                }
+                case PLUS -> {
+                    if(leftType == rightType) resultType = leftType;
+                    else throw new TypeCheckException(binaryExpr.firstToken.sourceLocation(), "addition operation on invalid types of: " + leftType + ", " + rightType);
+
+                }
+                default -> {
+                    if((leftType == Type.INT || leftType == Type.PIXEL || leftType == Type.IMAGE) && leftType == rightType) resultType = leftType;
+                    else if((leftType == Type.PIXEL || leftType == Type.IMAGE) && rightType == Type.INT) resultType = leftType;
+                    else throw new TypeCheckException(binaryExpr.firstToken.sourceLocation(), binaryExpr.getOpKind() + " operation on invalid types of: " + leftType + ", " + rightType);
+
+                }
             }
 
-            if (resultType != null) {
-                binaryExpr.setType(resultType);
-                return resultType;
-            }
-
-
-
-
-        throw new TypeCheckException();
+        binaryExpr.setType(resultType);
+        return resultType;
     }
 
 

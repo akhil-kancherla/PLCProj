@@ -3,6 +3,7 @@ package edu.ufl.cise.cop4020fa23;
 import edu.ufl.cise.cop4020fa23.ast.NameDef;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Stack;
 
 public class LeBlancSymbolTable {
@@ -18,22 +19,27 @@ public class LeBlancSymbolTable {
         scopes.pop();
     }
 
-    public void insert(String name, NameDef def) {
-        if (!scopes.isEmpty()) {
-            System.out.println("Inserting " + name + " into the current scope.");
-            scopes.peek().put(name, def);
+    public boolean insert(String name, NameDef def) {
+        if (scopes.isEmpty()) {
+            enterScope(); // ensure there is always at least one scope
         }
+        Map<String, NameDef> currentScope = scopes.peek();
+        if (currentScope.containsKey(name)) {
+            return false; // duplicate name definition
+        }
+        currentScope.put(name, def);
+        return true;
     }
 
     public NameDef lookup(String name) {
         for (int i = scopes.size() - 1; i >= 0; i--) {
-            if (scopes.get(i).containsKey(name)) {
-                System.out.println(name + " found in the scope at level " + i);
-                return scopes.get(i).get(name);
+            NameDef def = scopes.get(i).get(name);
+            //System.out.println("Looking for " + name + scopes.get(i).get(name) + "<--scope name");
+            if (def != null) {
+                return def;
             }
         }
-        System.out.println(name + " not found in any scope.");
-        return null;
+        return null; // not found
     }
 
     public NameDef lookupScope(String name) {
