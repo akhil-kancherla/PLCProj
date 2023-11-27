@@ -315,11 +315,10 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitIfStatement(IfStatement ifStatement, Object arg) throws PLCCompilerException {
-        Type conditionType = (Type) ifStatement.visit(this, arg);
-        if (conditionType != Type.BOOLEAN) {
-            throw new TypeCheckException("If statement condition must be of boolean type");
+
+        for (GuardedBlock block : ifStatement.getGuardedBlocks()) {
+            block.visit(this, arg);
         }
-        ifStatement.visit(this, arg);
         return null;
     }
 

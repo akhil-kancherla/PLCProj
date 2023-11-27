@@ -1,6 +1,7 @@
 package edu.ufl.cise.cop4020fa23;
 
 import edu.ufl.cise.cop4020fa23.ast.NameDef;
+import edu.ufl.cise.cop4020fa23.exceptions.TypeCheckException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,14 +20,12 @@ public class LeBlancSymbolTable {
         scopes.pop();
     }
 
-    public boolean insert(String name, NameDef def) {
+    public boolean insert(String name, NameDef def) throws TypeCheckException {
         if (scopes.isEmpty()) {
             enterScope(); // ensure there is always at least one scope
         }
         Map<String, NameDef> currentScope = scopes.peek();
-        if (currentScope.containsKey(name)) {
-            return false; // duplicate name definition
-        }
+
         currentScope.put(name, def);
         return true;
     }
