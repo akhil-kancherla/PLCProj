@@ -174,6 +174,10 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
+        NameDef nD = symbolTable.lookup(declaration.getNameDef().getName());
+        if (nD != null && (declaration.getNameDef().getType() == nD.getType())) {
+            throw new TypeCheckException("Variable already declared: " + declaration.getNameDef().getName());
+        }
         NameDef nameDef = declaration.getNameDef();
         Expr e = declaration.getInitializer();
 

@@ -6,6 +6,8 @@ import edu.ufl.cise.cop4020fa23.exceptions.TypeCheckException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
+import java.util.List;
+import java.util.ArrayList;
 
 public class LeBlancSymbolTable {
     private Stack<Map<String, NameDef>> scopes = new Stack<>();
@@ -25,7 +27,9 @@ public class LeBlancSymbolTable {
             enterScope(); // ensure there is always at least one scope
         }
         Map<String, NameDef> currentScope = scopes.peek();
-
+//        if (currentScope.containsKey(name)) {
+//            throw new TypeCheckException(); // duplicate name definition
+//        }
         currentScope.put(name, def);
         return true;
     }
