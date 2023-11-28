@@ -52,4 +52,18 @@ public class LeBlancSymbolTable {
         }
         return null;
     }
+
+    public int getCurrentScopeIndex() {
+        return scopes.size() - 1;
+    }
+
+    public Map<String, NameDef> getScope(int index) {
+        if (index >= 0 && index < scopes.size()) {
+            return scopes.get(index);
+        }
+        return null;
+    }
+
+
+
 }

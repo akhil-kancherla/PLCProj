@@ -40,12 +40,15 @@ public class CodeGenVisitor implements ASTVisitor {
                   code.append(", ");
               }
 
-              if (isReservedWord(param.getName())) {
-                  code.append(convertType(param.getType())).append(" ").append(param.getName()).append("$" + i);
+              String paramName = param.getName();
+              if (isReservedWord(paramName) || paramName.equals("true")) {
+                  code.append(convertType(param.getType())).append(" ").append(paramName).append("$" + i);
+              } else if(paramName.equals("false")){
+                  code.append(convertType(param.getType())).append(" ").append(paramName + "_");
+              } else {
+                  code.append(convertType(param.getType())).append(" ").append(paramName);
               }
-              else {
-                  code.append(convertType(param.getType())).append(" ").append(param.getName());
-              }
+
           }
 
           code.append(") {\n");
@@ -70,7 +73,8 @@ public class CodeGenVisitor implements ASTVisitor {
     }
 
     public boolean isReservedWord(String word) {
-        String[] reservedWords = {"true", "false", "image", "pixel", "int", "string", "void", "boolean", "write", "height", "width", "if", "fi", "do", "od", "red", "green", "blue"};
+
+        String[] reservedWords = {"image", "pixel", "int", "string", "void", "boolean", "write", "height", "width", "if", "fi", "do", "od", "red", "green", "blue"};
         for (String reservedWord : reservedWords) {
             if (reservedWord.equals(word)) {
                 return true;
@@ -133,7 +137,7 @@ public class CodeGenVisitor implements ASTVisitor {
         String varInitialization;
 
         if (varType == Type.STRING) {
-            varInitialization = " ";
+            varInitialization = " = null";
         } else if (varType == Type.BOOLEAN) {
             varInitialization = " = true";
         } else {
@@ -248,6 +252,8 @@ public class CodeGenVisitor implements ASTVisitor {
         }
         else if (unaryExpr.getOp() == Kind.BANG) {
             return "!" + exprCode;
+        } else if (unaryExpr.getOp() == Kind.QUESTION){
+
         }
         return unaryExpr.getOp() + exprCode;
     }
