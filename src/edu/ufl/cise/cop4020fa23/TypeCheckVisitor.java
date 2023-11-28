@@ -323,39 +323,32 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 
 
+//    @Override
+//    public Object visitNameDef(NameDef nameDef, Object arg) throws PLCCompilerException {
+//        symbolTable.insert(nameDef.getName(), nameDef);
+//
+//        if(nameDef.getDimension() != null){
+//            nameDef.getDimension().visit(this, arg);
+//        }
+//
+//        return nameDef.getType();
+//    }
+    private int variableCounter = 1;
+
     @Override
     public Object visitNameDef(NameDef nameDef, Object arg) throws PLCCompilerException {
-//        Dimension d = nameDef.getDimension();
-//        Type t = nameDef.getType();
-//
-//        if (d!=null) {
-//            d.visit(this, arg);
-//            if (!(t == Type.IMAGE)) {
-//                throw new TypeCheckException();
-//            }
-//        }
-//        else {
-//            if (!(t == Type.IMAGE || t == Type.BOOLEAN || t == Type.STRING || t == Type.PIXEL || t == Type.IMAGE)) {
-//                throw new TypeCheckException();
-//            }
-//        }
-//
-//        if (symbolTable.lookupScope(nameDef.getName()) != null) {
-//            throw new TypeCheckException();
-//        }
-//        else {
-//            symbolTable.insert(nameDef.getName(), nameDef);
-//        }
-//
-//        return t;
-        symbolTable.insert(nameDef.getName(), nameDef);
+        String uniqueName = nameDef.getName() + "$" + symbolTable.getCurrentScopeIndex();
+        nameDef.setJavaName(uniqueName);
 
-        if(nameDef.getDimension() != null){
+        symbolTable.insert(uniqueName, nameDef);
+
+        if (nameDef.getDimension() != null) {
             nameDef.getDimension().visit(this, arg);
         }
 
         return nameDef.getType();
     }
+
 
 
     @Override
@@ -419,6 +412,7 @@ public class TypeCheckVisitor implements ASTVisitor {
                 throw new TypeCheckException("Function parameter redefinition: " + nameDef.getName());
             }
             // Insert function parameters into the symbol table
+            nameDef.visit(this, arg);
             symbolTable.insert(nameDef.getName(), nameDef);
         }
 

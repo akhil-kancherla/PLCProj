@@ -110,17 +110,17 @@ public class NameDef extends Expr {
 		this.initialized = initStatus;
 	}
 
-//	/**
-//	 * @param string
-//	 */
-//	public void setJavaName(String string) {
-//		javaName = string;
-//	}
-//	
-//	public String getJavaName() {
-//		if (javaName != null) return javaName;
-//		throw new IllegalStateException("javaName not initialized");
-//	}
+	/**
+	 * @param string
+	 */
+	public void setJavaName(String string) {
+		javaName = string;
+	}
+
+	public String getJavaName() {
+		if (javaName != null) return javaName;
+		throw new IllegalStateException("javaName not initialized");
+	}
 	
 	
 }

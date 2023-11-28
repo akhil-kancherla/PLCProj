@@ -1,7 +1,9 @@
 package edu.ufl.cise.cop4020fa23;
 
 import edu.ufl.cise.cop4020fa23.ast.*;
+import edu.ufl.cise.cop4020fa23.exceptions.CodeGenException;
 import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
+import edu.ufl.cise.cop4020fa23.exceptions.TypeCheckException;
 import edu.ufl.cise.cop4020fa23.runtime.ConsoleIO;
 
 import java.util.List;
@@ -40,11 +42,10 @@ public class CodeGenVisitor implements ASTVisitor {
                   code.append(", ");
               }
 
-              String paramName = param.getName();
-              if (isReservedWord(paramName) || paramName.equals("true")) {
-                  code.append(convertType(param.getType())).append(" ").append(paramName).append("$" + i);
-              } else if(paramName.equals("false")){
-                  code.append(convertType(param.getType())).append(" ").append(paramName + "_");
+              String paramName = param.getJavaName();
+              if (isReservedWord(paramName) || paramName.equals("true") || paramName.equals("false")) {
+                  code.append(convertType(param.getType())).append(" ").append(paramName).append("$");
+                  param.visit(this,arg);
               } else {
                   code.append(convertType(param.getType())).append(" ").append(paramName);
               }
@@ -54,7 +55,8 @@ public class CodeGenVisitor implements ASTVisitor {
           code.append(") {\n");
 
           Block block = program.getBlock();
-          code.append(visitBlock(block, null));
+          code.append(block.visit(this,arg));
+          //code.append(visitBlock(block, null));
 
           code.append("    }\n");
           code.append("}\n");
@@ -85,7 +87,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
-        String varName = assignmentStatement.getlValue().getName();
+        String varName = (String) assignmentStatement.getlValue().visit(this, arg);
         String exprCode = (String) assignmentStatement.getE().visit(this, arg);
         return varName + " = " + exprCode + ";\n";
     }
@@ -97,7 +99,41 @@ public class CodeGenVisitor implements ASTVisitor {
         if (binaryExpr.getOpKind() == Kind.EXP) {
             return "((int)Math.round(Math.pow(" + leftExprCode + "," + rightExprCode + ")))";
         }
-        return leftExprCode + " " + binaryExpr.getOp().text() + " " + rightExprCode;
+        return leftExprCode + " " + convert(binaryExpr.getOp().kind()) + " " + rightExprCode;
+    }
+
+    String convert(Kind kind) throws CodeGenException{
+        switch(kind){
+            case BANG:
+                return "!";
+            case EQ:
+                return "==";
+            case LPAREN:
+                return "(";
+            case RPAREN:
+                return ")";
+            case ASSIGN:
+                return"=";
+            case LT:
+                return "<";
+            case GT:
+                return ">";
+            case PLUS:
+                return "+";
+            case MINUS:
+                return "-";
+            case OR:
+                return "||";
+            case LSQUARE:
+                return "[";
+            case RSQUARE:
+                return "]";
+            case TIMES:
+                return "*";
+            case QUESTION:
+                return "?";
+        }
+         throw new CodeGenException("Could not match kind" + kind);
     }
 
     @Override
@@ -127,22 +163,24 @@ public class CodeGenVisitor implements ASTVisitor {
         String conditionCode = (String) conditionalExpr.getGuardExpr().visit(this, arg);
         String trueExprCode = (String) conditionalExpr.getTrueExpr().visit(this, arg);
         String falseExprCode = (String) conditionalExpr.getFalseExpr().visit(this, arg);
-        return conditionCode + " ? " + trueExprCode + " : " + falseExprCode;
+        return "(" + conditionCode + " ? " + trueExprCode + " : " + falseExprCode + ")";
     }
 
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
-        String varName = declaration.getNameDef().getName();
+        String varName = declaration.getNameDef().getJavaName();
         Type varType = declaration.getNameDef().getType();
-        String varInitialization;
-
-        if (varType == Type.STRING) {
-            varInitialization = " = null";
-        } else if (varType == Type.BOOLEAN) {
-            varInitialization = " = true";
-        } else {
-            varInitialization = " = 0";
+        String varInitialization = "";
+        if (declaration.getInitializer() != null){
+            varInitialization = " = " + declaration.getInitializer().visit(this, arg);
         }
+//        if (varType == Type.STRING) {
+//            varInitialization = " = null";
+//        } else if (varType == Type.BOOLEAN) {
+//            varInitialization = " = true";
+//        } else {
+//            varInitialization = " = 0";
+//        }
 
         return convertType(varType) + " " + varName + varInitialization + ";\n";
     }
@@ -185,7 +223,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCCompilerException {
-        return identExpr.getName();
+        return identExpr.getNameDef().getJavaName();
     }
 
     @Override
@@ -202,12 +240,12 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitLValue(LValue lValue, Object arg) throws PLCCompilerException {
-        return null;
+        return lValue.getNameDef().getJavaName();
     }
 
     @Override
     public Object visitNameDef(NameDef nameDef, Object arg) throws PLCCompilerException {
-        return nameDef.getName();
+        return nameDef.getJavaName();
     }
 
     @Override
