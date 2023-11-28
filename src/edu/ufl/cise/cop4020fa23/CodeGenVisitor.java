@@ -129,7 +129,18 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
         String varName = declaration.getNameDef().getName();
-        return convertType(declaration.getNameDef().getType()) + " " + varName + ";\n";
+        Type varType = declaration.getNameDef().getType();
+        String varInitialization;
+
+        if (varType == Type.STRING) {
+            varInitialization = " ";
+        } else if (varType == Type.BOOLEAN) {
+            varInitialization = " = true";
+        } else {
+            varInitialization = " = 0";
+        }
+
+        return convertType(varType) + " " + varName + varInitialization + ";\n";
     }
 
     @Override

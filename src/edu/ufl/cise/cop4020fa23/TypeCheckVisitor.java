@@ -265,32 +265,6 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCCompilerException {
-//        if (isSpecialIdentifier(identExpr.getName())) {
-//            identExpr.setType(Type.INT);
-//            return Type.INT;
-//        } else if (arg instanceof PixelSelector && ((PixelSelector) arg).isInLValueContext()) {
-//            // If the identifier is used in a pixel selector in an LValue context,
-//            // implicitly declare it by adding it to the symbol table
-//            NameDef nameDef = new SyntheticNameDef(identExpr.getName());
-//            symbolTable.enterScope();
-//            symbolTable.insert(identExpr.getName(), new SyntheticNameDef(nameDef.getName()));
-//            identExpr.setType(nameDef.getType());
-//            identExpr.setNameDef(nameDef);
-//            symbolTable.leaveScope(); // Leave the scope after inserting
-//            return nameDef.getType();
-//        } else {
-//            // Otherwise, proceed as normal
-//            NameDef nameDef = symbolTable.lookup(identExpr.getName());
-//            if (nameDef == null) {
-//                // Dynamically insert the variable into the symbol table
-//                symbolTable.insert(identExpr.getName(), new SyntheticNameDef(identExpr.getName()));
-//                nameDef = symbolTable.lookup(identExpr.getName());
-//            }
-//            identExpr.setType(nameDef.getType());
-//            identExpr.setNameDef(nameDef);
-//            return nameDef.getType();
-//        }
-
         if (isSpecialIdentifier(identExpr.getName())) {
             identExpr.setType(Type.INT);
             return Type.INT;
