@@ -132,6 +132,8 @@ public class CodeGenVisitor implements ASTVisitor {
                 return "*";
             case QUESTION:
                 return "?";
+            case LE:
+                return "<=";
         }
          throw new CodeGenException("Could not match kind" + kind);
     }
@@ -305,7 +307,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitBooleanLitExpr(BooleanLitExpr booleanLitExpr, Object arg) throws PLCCompilerException {
-        return String.valueOf(booleanLitExpr.getText());
+        return String.valueOf(booleanLitExpr.getText().toLowerCase());
     }
 
     @Override
