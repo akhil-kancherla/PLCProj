@@ -243,7 +243,7 @@ public class CodeGenVisitor implements ASTVisitor {
         String redCode = (String) expandedPixelExpr.getRed().visit(this, arg);
         String greenCode = (String) expandedPixelExpr.getGreen().visit(this, arg);
         String blueCode = (String) expandedPixelExpr.getBlue().visit(this, arg);
-        return "new Color(" + redCode + ", " + greenCode + ", " + blueCode + ")";
+        return "PixelOps.pack(" + redCode + ", " + greenCode + ", " + blueCode + ")";
     }
 
     @Override

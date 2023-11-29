@@ -72,9 +72,6 @@ public class TypeCheckVisitor implements ASTVisitor {
         Type rightType = (Type) binaryExpr.getRightExpr().visit(this, arg);
         Type resultType = null;
 
-        if (leftType == null || rightType == null || leftType != rightType) {
-            throw new TypeCheckException();
-        }
 
 
             switch (binaryExpr.getOpKind()) {
@@ -233,8 +230,8 @@ public class TypeCheckVisitor implements ASTVisitor {
             throw new TypeCheckException("Invalid pixel expression types: red, green, and blue components must be of type INT.");
         }
 
-        expandedPixelExpr.setType(Type.IMAGE);
-        return Type.IMAGE;
+        expandedPixelExpr.setType(Type.PIXEL);
+        return Type.PIXEL;
     }
 
 
