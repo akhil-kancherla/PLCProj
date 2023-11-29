@@ -7,6 +7,8 @@ import edu.ufl.cise.cop4020fa23.exceptions.TypeCheckException;
 import edu.ufl.cise.cop4020fa23.runtime.ConsoleIO;
 import java.awt.Color;
 import edu.ufl.cise.cop4020fa23.runtime.FileURLIO;
+import edu.ufl.cise.cop4020fa23.runtime.*;
+
 
 
 import java.sql.SQLOutput;
@@ -29,7 +31,8 @@ public class CodeGenVisitor implements ASTVisitor {
 
           code.append("package edu.ufl.cise.cop4020fa23;\n\n");
 
-          code.append("import edu.ufl.cise.cop4020fa23.runtime.ConsoleIO;\n\n");
+          code.append("import edu.ufl.cise.cop4020fa23.runtime.*;\n\n");
+
 
           String className = program.getName();
           code.append("public class ").append(className).append(" {\n");
@@ -60,7 +63,6 @@ public class CodeGenVisitor implements ASTVisitor {
 
           Block block = program.getBlock();
           code.append(block.visit(this,arg));
-          //code.append(visitBlock(block, null));
 
           code.append("    }\n");
           code.append("}\n");
@@ -113,9 +115,28 @@ public class CodeGenVisitor implements ASTVisitor {
         String rightExprCode = (String) binaryExpr.getRightExpr().visit(this, arg);
         if (binaryExpr.getOpKind() == Kind.EXP) {
             return "((int)Math.round(Math.pow(" + leftExprCode + "," + rightExprCode + ")))";
+        } else if (binaryExpr.getOpKind() == Kind.PLUS) {
+            if (isImageType(binaryExpr.getLeftExpr().getType()) && isImageType(binaryExpr.getRightExpr().getType())) {
+                return "ImageOps.binaryImageImageOp(" + leftExprCode + ", " + rightExprCode + ")";
+            } else if (isPixelType(binaryExpr.getLeftExpr().getType()) && isPixelType(binaryExpr.getRightExpr().getType())) {
+                return "ImageOps.binaryPackedPixelPixelOp(ImageOps.OP.PLUS, " + leftExprCode + ", " + rightExprCode + ")";
+            } else if (isImageType(binaryExpr.getLeftExpr().getType()) && isPixelType(binaryExpr.getRightExpr().getType())) {
+                return "ImageOps.binaryImagePixelOp(ImageOps.OP.PLUS, " + leftExprCode + ", " + rightExprCode + ")";
+            } else if (isPixelType(binaryExpr.getLeftExpr().getType()) && isImageType(binaryExpr.getRightExpr().getType())) {
+                return "ImageOps.binaryImagePixelOp(ImageOps.OP.PLUS, " + rightExprCode + ", " + leftExprCode + ")";
+            }
         }
         return leftExprCode + " " + convert(binaryExpr.getOp().kind()) + " " + rightExprCode;
     }
+
+    private boolean isImageType(Type type) {
+        return type == Type.IMAGE;
+    }
+
+    private boolean isPixelType(Type type) {
+        return type == Type.PIXEL;
+    }
+
 
     String convert(Kind kind) throws CodeGenException{
         switch(kind){
@@ -339,6 +360,8 @@ public class CodeGenVisitor implements ASTVisitor {
                 return Color.RED;
             case "PINK":
                 return Color.PINK;
+            case "GREEN":
+                return Color.GREEN;
             default:
                 throw new PLCCompilerException("Unknown PLC Lang constant: " + plcLangConstant);
         }

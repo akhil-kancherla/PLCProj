@@ -500,7 +500,7 @@ public class TypeCheckVisitor implements ASTVisitor {
     @Override
     public Object visitConstExpr(ConstExpr constExpr, Object arg) throws PLCCompilerException {
         String constName = constExpr.getName();
-        if ("RED".equals(constName) || "GREEN".equals(constName) || "BLUE".equals(constName)) {
+        if ("RED".equals(constName) || "GREEN".equals(constName) || "BLUE".equals(constName) || "PINK".equals(constName)) {
             constExpr.setType(Type.PIXEL);
             return Type.PIXEL; // Return PIXEL type for pixel constants
         }
