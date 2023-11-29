@@ -9,6 +9,7 @@ import java.awt.Color;
 import edu.ufl.cise.cop4020fa23.runtime.FileURLIO;
 
 
+import java.sql.SQLOutput;
 import java.util.List;
 
 //import edu.ufl.cise.cop4020fa23.ast.ASTVisitor;
@@ -69,13 +70,22 @@ public class CodeGenVisitor implements ASTVisitor {
     }
 
     private String convertType(Type type) {
-        if (type == Type.STRING) {
-            return "String";
-        }
-        else {
-            return type.toString().toLowerCase();
+        switch (type) {
+            case STRING:
+                return "String";
+            case PIXEL:
+                return "int";
+            case INT:
+                return "int";
+            case BOOLEAN:
+                return "boolean";
+            // Add more cases for other predefined types if needed
+            default:
+                throw new IllegalArgumentException("Unsupported type: " + type);
         }
     }
+
+
 
     public boolean isReservedWord(String word) {
         String[] reservedWords = {"image", "pixel", "int", "string", "void", "boolean", "write", "height", "width", "if", "fi", "do", "od", "red", "green", "blue"};
@@ -265,17 +275,18 @@ public class CodeGenVisitor implements ASTVisitor {
     }
 
 
-
     @Override
     public Object visitReturnStatement(ReturnStatement returnStatement, Object arg) throws PLCCompilerException {
         String exprCode = (String) returnStatement.getE().visit(this, arg);
         return "return " + exprCode + ";\n";
     }
 
+
     @Override
     public Object visitStringLitExpr(StringLitExpr stringLitExpr, Object arg) throws PLCCompilerException {
         return stringLitExpr.getText();
     }
+
 
     @Override
     public Object visitUnaryExpr(UnaryExpr unaryExpr, Object arg) throws PLCCompilerException {
@@ -290,6 +301,7 @@ public class CodeGenVisitor implements ASTVisitor {
         }
         return unaryExpr.getOp() + exprCode;
     }
+
 
     @Override
     public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws PLCCompilerException {
@@ -308,14 +320,13 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitConstExpr(ConstExpr constExpr, Object arg) throws PLCCompilerException {
         if ("Z".equals(constExpr.getName())) {
             return "255";
-        }
-        else {
+        } else {
             Color colorConstant = getColorConstant(constExpr.getName());
             int rgb = colorConstant.getRGB();
-            return "0x" + Integer.toHexString(rgb);
+            String hexColor = "0x" + Integer.toHexString(rgb);
+            return hexColor;
         }
     }
-
 
     private Color getColorConstant(String plcLangConstant) throws PLCCompilerException {
         switch (plcLangConstant) {
@@ -323,9 +334,12 @@ public class CodeGenVisitor implements ASTVisitor {
                 return Color.BLUE;
             case "RED":
                 return Color.RED;
+            case "PINK":
+                return Color.PINK;
             default:
                 throw new PLCCompilerException("Unknown PLC Lang constant: " + plcLangConstant);
         }
     }
+
 
 }
