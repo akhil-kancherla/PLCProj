@@ -499,9 +499,17 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitConstExpr(ConstExpr constExpr, Object arg) throws PLCCompilerException {
+        String constName = constExpr.getName();
+        if ("RED".equals(constName) || "GREEN".equals(constName) || "BLUE".equals(constName)) {
+            constExpr.setType(Type.PIXEL);
+            return Type.PIXEL; // Return PIXEL type for pixel constants
+        }
         constExpr.setType(Type.INT);
         return Type.INT;
     }
+
+
+
 
     private boolean isSpecialIdentifier(String name) {
         // Add the logic to identify if 'name' is a special identifier like 'z'

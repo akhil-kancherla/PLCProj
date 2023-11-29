@@ -6,6 +6,7 @@ import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
 import edu.ufl.cise.cop4020fa23.exceptions.TypeCheckException;
 import edu.ufl.cise.cop4020fa23.runtime.ConsoleIO;
 import java.awt.Color;
+import edu.ufl.cise.cop4020fa23.runtime.FileURLIO;
 
 
 import java.util.List;
@@ -157,8 +158,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitChannelSelector(ChannelSelector channelSelector, Object arg) throws PLCCompilerException {
-//        return channelSelector.color();
-        return null;
+        return channelSelector.color();
     }
 
     @Override
@@ -188,32 +188,35 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitDoStatement(DoStatement doStatement, Object arg) throws PLCCompilerException {
-//        javaCode.append("do {\n");
-//        for (GuardedBlock guardedBlock : doStatement.getGuardedBlocks()) {
-//            String guardExprCode = (String) guardedBlock.getGuard().visit(this, arg);
-//            String blockCode = (String) guardedBlock.getBlock().visit(this, arg);
-//            javaCode.append("if (").append(guardExprCode).append(") ").append(blockCode).append("\n");
-//        }
-//        javaCode.append("} while (true);\n");
-//        return javaCode.toString();
-        return null;
+        StringBuilder doStatementCode = new StringBuilder();
+
+        doStatementCode.append("do {\n");
+
+        for (GuardedBlock guardedBlock : doStatement.getGuardedBlocks()) {
+            String guardExprCode = (String) guardedBlock.getGuard().visit(this, arg);
+            String blockCode = (String) guardedBlock.getBlock().visit(this, arg);
+            doStatementCode.append("if (").append(guardExprCode).append(") ").append(blockCode).append("\n");
+        }
+
+        doStatementCode.append("} while (false);\n");
+
+        return doStatementCode.toString();
     }
+
 
     @Override
     public Object visitExpandedPixelExpr(ExpandedPixelExpr expandedPixelExpr, Object arg) throws PLCCompilerException {
-//        String redCode = (String) expandedPixelExpr.getRed().visit(this, arg);
-//        String greenCode = (String) expandedPixelExpr.getGreen().visit(this, arg);
-//        String blueCode = (String) expandedPixelExpr.getBlue().visit(this, arg);
-//        return "new Color(" + redCode + ", " + greenCode + ", " + blueCode + ")";
-        return null;
+        String redCode = (String) expandedPixelExpr.getRed().visit(this, arg);
+        String greenCode = (String) expandedPixelExpr.getGreen().visit(this, arg);
+        String blueCode = (String) expandedPixelExpr.getBlue().visit(this, arg);
+        return "new Color(" + redCode + ", " + greenCode + ", " + blueCode + ")";
     }
 
     @Override
     public Object visitGuardedBlock(GuardedBlock guardedBlock, Object arg) throws PLCCompilerException {
-//        String conditionCode = (String) guardedBlock.getGuard().visit(this, arg);
-//        String blockCode = (String) guardedBlock.getBlock().visit(this, arg);
-//        return "if (" + conditionCode + ") " + blockCode;
-        return null;
+        String conditionCode = (String) guardedBlock.getGuard().visit(this, arg);
+        String blockCode = (String) guardedBlock.getBlock().visit(this, arg);
+        return "if (" + conditionCode + ") " + blockCode;
     }
 
     @Override
@@ -223,14 +226,13 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitIfStatement(IfStatement ifStatement, Object arg) throws PLCCompilerException {
-//        StringBuilder ifStatementCode = new StringBuilder();
-//        for (GuardedBlock guardedBlock : ifStatement.getGuardedBlocks()) {
-//            String guardExprCode = (String) guardedBlock.getGuard().visit(this, arg);
-//            String blockCode = (String) guardedBlock.getBlock().visit(this, arg);
-//            ifStatementCode.append("if (").append(guardExprCode).append(") ").append(blockCode).append("\n");
-//        }
-//        return ifStatementCode.toString();
-        return null;
+        StringBuilder ifStatementCode = new StringBuilder();
+        for (GuardedBlock guardedBlock : ifStatement.getGuardedBlocks()) {
+            String guardExprCode = (String) guardedBlock.getGuard().visit(this, arg);
+            String blockCode = (String) guardedBlock.getBlock().visit(this, arg);
+            ifStatementCode.append("if (").append(guardExprCode).append(") ").append(blockCode).append("\n");
+        }
+        return ifStatementCode.toString();
     }
 
     @Override
@@ -250,18 +252,16 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitPixelSelector(PixelSelector pixelSelector, Object arg) throws PLCCompilerException {
-//        String xExprCode = (String) pixelSelector.xExpr().visit(this, arg);
-//        String yExprCode = (String) pixelSelector.yExpr().visit(this, arg);
-//        return "[" + xExprCode + ", " + yExprCode + "]";
-        return null;
+        String xExprCode = (String) pixelSelector.xExpr().visit(this, arg);
+        String yExprCode = (String) pixelSelector.yExpr().visit(this, arg);
+        return "[" + xExprCode + ", " + yExprCode + "]";
     }
 
     @Override
     public Object visitPostfixExpr(PostfixExpr postfixExpr, Object arg) throws PLCCompilerException {
-//        String exprCode = (String) postfixExpr.primary().visit(this, arg);
-//        String pixelSelectorCode = (String) postfixExpr.pixel().visit(this, arg);
-//        return exprCode + pixelSelectorCode;
-        return null;
+        String exprCode = (String) postfixExpr.primary().visit(this, arg);
+        String pixelSelectorCode = (String) postfixExpr.pixel().visit(this, arg);
+        return exprCode + pixelSelectorCode;
     }
 
 
@@ -303,14 +303,6 @@ public class CodeGenVisitor implements ASTVisitor {
         return String.valueOf(booleanLitExpr.getText().toLowerCase());
     }
 
-//    @Override
-//    public Object visitConstExpr(ConstExpr constExpr, Object arg) throws PLCCompilerException {
-//        if (constExpr.getName() == "Z"){
-//            return 255;
-//        }
-//        return null;
-//    }
-
 
     @Override
     public Object visitConstExpr(ConstExpr constExpr, Object arg) throws PLCCompilerException {
@@ -320,12 +312,12 @@ public class CodeGenVisitor implements ASTVisitor {
         else {
             Color colorConstant = getColorConstant(constExpr.getName());
             int rgb = colorConstant.getRGB();
-            return "\"0x\" + Integer.toHexString(" + rgb + ")";
+            return "0x" + Integer.toHexString(rgb);
         }
     }
 
 
-    private Color getColorConstant(String plcLangConstant) throws PLCCompilerException{
+    private Color getColorConstant(String plcLangConstant) throws PLCCompilerException {
         switch (plcLangConstant) {
             case "BLUE":
                 return Color.BLUE;
