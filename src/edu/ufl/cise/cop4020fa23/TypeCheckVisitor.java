@@ -50,9 +50,6 @@ public class TypeCheckVisitor implements ASTVisitor {
                     (Type) expandedPixelExpr.getBlue().visit(this, arg) == Type.INT)) {
                 throw new TypeCheckException("Invalid pixel expression types: red, green, and blue components must be of type INT.");
             }
-        } else if (lhsType != (rhsType)) {
-            // Check if the types are compatible for assignment for other cases
-            throw new TypeCheckException("Type mismatch in assignment: " + lhsType + " cannot be assigned to " + rhsType);
         }
 
         // If the variable is declared, set it as initialized
@@ -60,7 +57,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 
         symbolTable.leaveScope();
 
-        return null;
+        return Type.VOID;
     }
 
 
@@ -70,7 +67,7 @@ public class TypeCheckVisitor implements ASTVisitor {
     public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws PLCCompilerException {
         Type leftType = (Type) binaryExpr.getLeftExpr().visit(this, arg);
         Type rightType = (Type) binaryExpr.getRightExpr().visit(this, arg);
-        Type resultType = null;
+        Type resultType;
 
 
 
@@ -125,7 +122,7 @@ public class TypeCheckVisitor implements ASTVisitor {
             node.visit(this, arg);
         }
         symbolTable.leaveScope();
-        return null;
+        return Type.VOID;
     }
 
     @Override
@@ -203,7 +200,7 @@ public class TypeCheckVisitor implements ASTVisitor {
             throw new TypeCheckException("Dimension width and height should be of type INT");
         }
 
-        return null;
+        return Type.VOID;
     }
 
 
@@ -216,7 +213,7 @@ public class TypeCheckVisitor implements ASTVisitor {
         }
         // Leave the scope after the do-statement block
         symbolTable.leaveScope();
-        return null;
+        return Type.VOID;
     }
 
     @Override
@@ -227,7 +224,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 
         // Here we check if any of the types is not INT, since an image pixel should only consist of INT types
         if (redType != Type.INT || greenType != Type.INT || blueType != Type.INT) {
-            throw new TypeCheckException("Invalid pixel expression types: red, green, and blue components must be of type INT.");
+            throw new TypeCheckException("Invalid pixel expression types: red, green, and blue components must be of type INT. RedType = " + redType + ", greenType = " + greenType + ", blueType = " + blueType);
         }
 
         expandedPixelExpr.setType(Type.PIXEL);
@@ -256,7 +253,7 @@ public class TypeCheckVisitor implements ASTVisitor {
         // Leave the scope after visiting the block
         symbolTable.leaveScope();
 
-        return null;
+        return Type.VOID;
     }
 
 
@@ -294,7 +291,7 @@ public class TypeCheckVisitor implements ASTVisitor {
         for (GuardedBlock block : ifStatement.getGuardedBlocks()) {
             block.visit(this, arg);
         }
-        return null;
+        return Type.VOID;
     }
 
     @Override
@@ -306,6 +303,7 @@ public class TypeCheckVisitor implements ASTVisitor {
         }
 
         PixelSelector pixelSelector = lValue.getPixelSelector();
+        ChannelSelector channelSelector = lValue.getChannelSelector();
         if (pixelSelector != null) {
             if (nameDef.getType() != Type.IMAGE) {
                 throw new PLCCompilerException("Pixel selectors can only be used with image types.");
@@ -315,6 +313,28 @@ public class TypeCheckVisitor implements ASTVisitor {
                 throw new PLCCompilerException("Invalid pixel selector usage for variable: " + lValue.getName());
             }
         }
+
+        if (lValue.getVarType() == Type.IMAGE && pixelSelector != null && channelSelector == null) {
+            lValue.setType(Type.PIXEL);
+            return Type.PIXEL;
+        }
+        else if (lValue.getVarType() == Type.IMAGE && pixelSelector != null && channelSelector != null) {
+            lValue.setType(Type.INT);
+            return Type.INT;
+        }
+        else if (lValue.getVarType() == Type.IMAGE && pixelSelector == null && channelSelector != null) {
+            lValue.setType(Type.IMAGE);
+            return Type.IMAGE;
+        }
+        else if (lValue.getVarType() == Type.PIXEL && pixelSelector == null && channelSelector != null) {
+            lValue.setType(Type.INT);
+            return Type.INT;
+        }
+        else if (pixelSelector == null && channelSelector == null) {
+            lValue.setType(lValue.getVarType());
+            return lValue.getVarType();
+        }
+
 
         return nameDef.getType();
     }
@@ -380,18 +400,36 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitPostfixExpr(PostfixExpr postfixExpr, Object arg) throws PLCCompilerException {
-        Type primaryType = (Type) postfixExpr.primary().visit(this, arg);
-        if (postfixExpr.pixel() != null && postfixExpr.channel() != null) {
-            postfixExpr.pixel().visit(this, arg);
-            postfixExpr.setType(Type.INT);
-        } else if (postfixExpr.pixel() != null) {
-            postfixExpr.pixel().visit(this, arg);
+        Type primaryType = (Type) postfixExpr.primary().getType();
+        PixelSelector pixelSelector = postfixExpr.pixel();
+        ChannelSelector channelSelector = postfixExpr.channel();
+        if (primaryType == Type.IMAGE && pixelSelector != null && channelSelector == null) {
             postfixExpr.setType(Type.PIXEL);
-        } else {
+
+        }
+        else if (primaryType == Type.IMAGE && pixelSelector != null && channelSelector != null) {
+            postfixExpr.setType(Type.INT);
+        }
+        else if (primaryType == Type.IMAGE && pixelSelector == null && channelSelector != null) {
+            postfixExpr.setType(Type.IMAGE);
+        }
+        else if (primaryType == Type.PIXEL && pixelSelector == null && channelSelector != null) {
+            postfixExpr.setType(Type.INT);
+        }
+        else if (pixelSelector == null && channelSelector == null) {
             postfixExpr.setType(primaryType);
         }
+//        if (postfixExpr.pixel() != null && postfixExpr.channel() != null) {
+//            postfixExpr.pixel().visit(this, arg);
+//            postfixExpr.setType(Type.INT);
+//        } else if (postfixExpr.pixel() != null) {
+//            postfixExpr.pixel().visit(this, arg);
+//            postfixExpr.setType(Type.PIXEL);
+//        } else {
+//            postfixExpr.setType(primaryType);
+//        }
 
-        return postfixExpr.getType();
+        return postfixExpr.primary().getType();
     }
 
 
@@ -422,7 +460,7 @@ public class TypeCheckVisitor implements ASTVisitor {
         functionReturnTypes.pop();
 
         symbolTable.leaveScope();
-        return null;
+        return Type.VOID;
     }
 
 
@@ -484,7 +522,7 @@ public class TypeCheckVisitor implements ASTVisitor {
     @Override
     public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws PLCCompilerException {
         writeStatement.getExpr().visit(this, arg);
-        return null;
+        return Type.VOID;
     }
 
 

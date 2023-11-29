@@ -104,30 +104,127 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
+
         String varName = (String) assignmentStatement.getlValue().visit(this, arg);
         String exprCode = (String) assignmentStatement.getE().visit(this, arg);
+        PixelSelector pixelSelector = assignmentStatement.getlValue().getPixelSelector();
+        ChannelSelector channelSelector = assignmentStatement.getlValue().getChannelSelector();
+        Type exprType = assignmentStatement.getE().getType();
+        if (assignmentStatement.getlValue().getVarType() == Type.IMAGE) {
+            if (pixelSelector == null && channelSelector == null) {
+                if (exprType == Type.IMAGE) {
+                    return "ImageOps.copyInto(" + assignmentStatement.getE() + ", " + assignmentStatement.getlValue() + ")";
+                }
+                else if (exprType == Type.PIXEL) {
+                    return "ImageOps.setAllPixels(" + assignmentStatement.getlValue() + ", " + assignmentStatement.getE() + ")";
+                }
+                else if (exprType == Type.STRING) {
+                    return "ImageOps.copyInto((FileURLIO.readImage(" + assignmentStatement.getE() + "))," + assignmentStatement.getlValue() + ")";
+                }
+            }
+            else if (channelSelector != null) {
+                throw new UnsupportedOperationException("Null channelSelector in assignmentStatement");
+            }
+
+        }
+        String pixStatement = (String) assignmentStatement.getE().visit(this, arg);
+        System.out.println(assignmentStatement.getlValue().getType());
+        System.out.println(assignmentStatement.getE().getType());
+        if (assignmentStatement.getlValue().getType() == Type.PIXEL && assignmentStatement.getE().getType() == Type.INT) {
+            return assignmentStatement.getlValue().visit(this, arg) + " = " + "PixelOps.pack(" + pixStatement + ", " + pixStatement + ", " + pixStatement + ");";
+        }
+
         return varName + " = " + exprCode + ";\n";
     }
 
     @Override
     public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws PLCCompilerException {
-        String leftExprCode = (String) binaryExpr.getLeftExpr().visit(this, arg);
-        String rightExprCode = (String) binaryExpr.getRightExpr().visit(this, arg);
-        if (binaryExpr.getOpKind() == Kind.EXP) {
-            return "((int)Math.round(Math.pow(" + leftExprCode + "," + rightExprCode + ")))";
-        } else if (binaryExpr.getOpKind() == Kind.PLUS) {
-            if (isImageType(binaryExpr.getLeftExpr().getType()) && isImageType(binaryExpr.getRightExpr().getType())) {
-                return "ImageOps.binaryImageImageOp(" + leftExprCode + ", " + rightExprCode + ")";
-            } else if (isPixelType(binaryExpr.getLeftExpr().getType()) && isPixelType(binaryExpr.getRightExpr().getType())) {
-                return "ImageOps.binaryPackedPixelPixelOp(ImageOps.OP.PLUS, " + leftExprCode + ", " + rightExprCode + ")";
-            } else if (isImageType(binaryExpr.getLeftExpr().getType()) && isPixelType(binaryExpr.getRightExpr().getType())) {
-                return "ImageOps.binaryImagePixelOp(ImageOps.OP.PLUS, " + leftExprCode + ", " + rightExprCode + ")";
-            } else if (isPixelType(binaryExpr.getLeftExpr().getType()) && isImageType(binaryExpr.getRightExpr().getType())) {
-                return "ImageOps.binaryImagePixelOp(ImageOps.OP.PLUS, " + rightExprCode + ", " + leftExprCode + ")";
+            StringBuilder binary = new StringBuilder();
+            Type leftType = binaryExpr.getLeftExpr().getType();
+            Type rightType = binaryExpr.getRightExpr().getType();
+
+            //String imageOpsMethod = getImageOpsMethodName(leftType, rightType, binaryExpr.getOp());
+
+            if(binaryExpr.getLeftExpr().getType() == Type.STRING && binaryExpr.getOp().kind() == Kind.EQ)
+            {
+                binary.append(binaryExpr.getLeftExpr().visit(this, arg));
+                binary.append(".equals(");
+                binary.append(binaryExpr.getRightExpr().visit(this, arg));
+                binary.append(")");
+            } else if(binaryExpr.getOp().kind() == Kind.EXP)
+            {
+                binary.append("((int)Math.round(Math.pow(");
+                binary.append(binaryExpr.getLeftExpr().visit(this, arg));
+                binary.append(", ");
+                binary.append(binaryExpr.getRightExpr().visit(this, arg));
+                binary.append(")))");
             }
+            else if (leftType == Type.PIXEL && rightType == Type.PIXEL && binaryExpr.getOp().kind() == Kind.PLUS) {
+                // Example for image-image operation
+                binary.append("(")
+                        .append("ImageOps.").append("binaryPackedPixelPixelOp").append("(")
+                        .append("ImageOps.OP.")
+                        .append(binaryExpr.getOp().kind())
+                        .append(",")
+                        .append(binaryExpr.getLeftExpr().visit(this, arg)).append(",")
+                        .append(binaryExpr.getRightExpr().visit(this, arg)).append(")").append(")");
+
+            } else if (leftType == Type.PIXEL && rightType == Type.INT){
+                //im1$2=ImageOps.copyAndResize((ImageOps.binaryImageScalarOp(ImageOps.OP.TIMES,im0$2,factor$1)),w$1,h$1);
+                binary.append(binaryExpr.getLeftExpr().visit(this,arg));
+                binary.append(binaryExpr.getOp().text());
+                binary.append("PixelOps.pack(")
+                        .append(binaryExpr.getRightExpr().visit(this,arg)).append(", ")
+                        .append(binaryExpr.getRightExpr().visit(this,arg)).append(", ")
+                        .append(binaryExpr.getRightExpr().visit(this,arg)).append(")");
+
+            }
+            else if(leftType == Type.IMAGE && rightType == Type.INT){
+                if(binaryExpr.getOp().kind() == Kind.TIMES){
+                    binary.append("(ImageOps.binaryImageScalarOp(ImageOps.OP.TIMES, ").append(binaryExpr.getLeftExpr().visit(this,arg))
+                            .append(" ,").append(binaryExpr.getRightExpr().visit(this,arg)).append("))");
+                    //im1$2=ImageOps.cloneImage((ImageOps.binaryImageScalarOp(ImageOps.OP.DIV,im0$2,factor$1)));
+                }else if(binaryExpr.getOp().kind() == Kind.DIV){ //passes but could be a problem when we have scopes
+                    binary.append("(ImageOps.binaryImageScalarOp(ImageOps.OP.DIV,").append(binaryExpr.getLeftExpr().visit(this,arg))
+                            .append(",").append(binaryExpr.getRightExpr().visit(this,arg)).append("))");
+                }
+            }
+            else {
+                binary.append("(");
+                binary.append(binaryExpr.getLeftExpr().visit(this, arg));
+                binary.append(binaryExpr.getOp().text());
+                binary.append(binaryExpr.getRightExpr().visit(this, arg));
+                binary.append(")");
+            }
+
+            return binary.toString();
         }
-        return leftExprCode + " " + convert(binaryExpr.getOp().kind()) + " " + rightExprCode;
-    }
+
+//        String leftExprCode = (String) binaryExpr.getLeftExpr().visit(this, arg);
+//        String rightExprCode = (String) binaryExpr.getRightExpr().visit(this, arg);
+//        if (binaryExpr.getOpKind() == Kind.EXP) {
+//            return "((int)Math.round(Math.pow(" + leftExprCode + "," + rightExprCode + ")))";
+//        } else if (binaryExpr.getOpKind() == Kind.PLUS) {
+//            if (isImageType(binaryExpr.getLeftExpr().getType()) && isImageType(binaryExpr.getRightExpr().getType())) {
+//                return "ImageOps.binaryImageImageOp(" + leftExprCode + ", " + rightExprCode + ")";
+//            } else if (isPixelType(binaryExpr.getLeftExpr().getType()) && isPixelType(binaryExpr.getRightExpr().getType())) {
+//                return "ImageOps.binaryPackedPixelPixelOp(ImageOps.OP.PLUS, " + leftExprCode + ", " + rightExprCode + ")";
+//            } else if (isImageType(binaryExpr.getLeftExpr().getType()) && isPixelType(binaryExpr.getRightExpr().getType())) {
+//                return "ImageOps.binaryImagePixelOp(ImageOps.OP.PLUS, " + leftExprCode + ", " + rightExprCode + ")";
+//            } else if (isPixelType(binaryExpr.getLeftExpr().getType()) && isImageType(binaryExpr.getRightExpr().getType())) {
+//                return "ImageOps.binaryImagePixelOp(ImageOps.OP.PLUS, " + rightExprCode + ", " + leftExprCode + ")";
+//            }
+//        }
+//        else if (binaryExpr.getOpKind() == Kind.ASSIGN) {
+//            if (isPixelType(binaryExpr.getLeftExpr().getType()) && binaryExpr.getRightExpr().getType() == Type.INT) {
+//                return "ImageOps.binaryPackedPixelIntOp(" + binaryExpr.getOpKind() + ", " + leftExprCode + ", " + rightExprCode + ")";
+//            }
+//        }
+//
+//
+//
+//        return leftExprCode + " " + convert(binaryExpr.getOp().kind()) + " " + rightExprCode;
+
 
     private boolean isImageType(Type type) {
         return type == Type.IMAGE;
