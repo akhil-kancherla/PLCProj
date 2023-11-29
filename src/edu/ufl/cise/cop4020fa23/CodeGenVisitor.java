@@ -78,8 +78,11 @@ public class CodeGenVisitor implements ASTVisitor {
             case INT:
                 return "int";
             case BOOLEAN:
-                return "boolean";
-            // Add more cases for other predefined types if needed
+                return "Boolean";
+            case IMAGE:
+                return "BufferedImage";
+            case VOID:
+                return "void";
             default:
                 throw new IllegalArgumentException("Unsupported type: " + type);
         }
