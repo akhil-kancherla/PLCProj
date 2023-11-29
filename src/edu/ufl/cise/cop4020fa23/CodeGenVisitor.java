@@ -5,6 +5,8 @@ import edu.ufl.cise.cop4020fa23.exceptions.CodeGenException;
 import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
 import edu.ufl.cise.cop4020fa23.exceptions.TypeCheckException;
 import edu.ufl.cise.cop4020fa23.runtime.ConsoleIO;
+import java.awt.Color;
+
 
 import java.util.List;
 
@@ -75,7 +77,6 @@ public class CodeGenVisitor implements ASTVisitor {
     }
 
     public boolean isReservedWord(String word) {
-
         String[] reservedWords = {"image", "pixel", "int", "string", "void", "boolean", "write", "height", "width", "if", "fi", "do", "od", "red", "green", "blue"};
         for (String reservedWord : reservedWords) {
             if (reservedWord.equals(word)) {
@@ -176,14 +177,6 @@ public class CodeGenVisitor implements ASTVisitor {
         if (declaration.getInitializer() != null){
             varInitialization = " = " + declaration.getInitializer().visit(this, arg);
         }
-//        if (varType == Type.STRING) {
-//            varInitialization = " = null";
-//        } else if (varType == Type.BOOLEAN) {
-//            varInitialization = " = true";
-//        } else {
-//            varInitialization = " = 0";
-//        }
-
         return convertType(varType) + " " + varName + varInitialization + ";\n";
     }
 
@@ -310,9 +303,37 @@ public class CodeGenVisitor implements ASTVisitor {
         return String.valueOf(booleanLitExpr.getText().toLowerCase());
     }
 
+//    @Override
+//    public Object visitConstExpr(ConstExpr constExpr, Object arg) throws PLCCompilerException {
+//        if (constExpr.getName() == "Z"){
+//            return 255;
+//        }
+//        return null;
+//    }
+
+
     @Override
     public Object visitConstExpr(ConstExpr constExpr, Object arg) throws PLCCompilerException {
-//        return (String) constExpr.visit(this, arg);
-        return null;
+        if ("Z".equals(constExpr.getName())) {
+            return "255";
+        }
+        else {
+            Color colorConstant = getColorConstant(constExpr.getName());
+            int rgb = colorConstant.getRGB();
+            return "\"0x\" + Integer.toHexString(" + rgb + ")";
+        }
     }
+
+
+    private Color getColorConstant(String plcLangConstant) throws PLCCompilerException{
+        switch (plcLangConstant) {
+            case "BLUE":
+                return Color.BLUE;
+            case "RED":
+                return Color.RED;
+            default:
+                throw new PLCCompilerException("Unknown PLC Lang constant: " + plcLangConstant);
+        }
+    }
+
 }
