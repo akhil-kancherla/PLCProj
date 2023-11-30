@@ -33,9 +33,9 @@ public class CodeGenVisitor implements ASTVisitor {
           code.append("package edu.ufl.cise.cop4020fa23;\n\n");
 
           code.append("import edu.ufl.cise.cop4020fa23.runtime.*;\n\n");
-          code.append("import edu.ufl.cise.cop4020fa23.runtime.ImageOps;\n");
+          code.append("import edu.ufl.cise.cop4020fa23.runtime.ImageOps;\n\n");
 
-          code.append("import java.awt.image.BufferedImage;");
+          code.append("import java.awt.image.BufferedImage;\n\n");
 
 
           String className = program.getName();
@@ -318,9 +318,9 @@ public class CodeGenVisitor implements ASTVisitor {
             }
             if (declaration.getInitializer().getType() == Type.IMAGE) {
                 if (declaration.getNameDef().getDimension() != null) {
-                    return "ImageOps.copyAndResize(" + declaration.getInitializer().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getWidth().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getHeight().visit(this, arg) + ");";
+                    return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" +"ImageOps.copyAndResize(" + declaration.getInitializer().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getWidth().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getHeight().visit(this, arg) + ");";
                 }
-                return "ImageOps.cloneImage(" + declaration.getInitializer().visit(this, arg) + ");";
+                return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" +"ImageOps.cloneImage(" + declaration.getInitializer().visit(this, arg) + ");";
             }
         }
 
