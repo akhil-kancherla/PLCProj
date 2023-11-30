@@ -341,17 +341,6 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 
 
-//    @Override
-//    public Object visitNameDef(NameDef nameDef, Object arg) throws PLCCompilerException {
-//        symbolTable.insert(nameDef.getName(), nameDef);
-//
-//        if(nameDef.getDimension() != null){
-//            nameDef.getDimension().visit(this, arg);
-//        }
-//
-//        return nameDef.getType();
-//    }
-    private int variableCounter = 1;
 
     @Override
     public Object visitNameDef(NameDef nameDef, Object arg) throws PLCCompilerException {
@@ -394,6 +383,9 @@ public class TypeCheckVisitor implements ASTVisitor {
         if (xType != Type.INT || yType != Type.INT) {
             throw new TypeCheckException("Pixel selector coordinates must be of integer type");
         }
+
+        ((SyntheticNameDef) symbolTable.lookup(((IdentExpr) xExpr).getName())).setJavaName(((IdentExpr) xExpr).getName() + "$" + symbolTable.getCurrentScopeIndex());
+        ((SyntheticNameDef) symbolTable.lookup(((IdentExpr) yExpr).getName())).setJavaName(((IdentExpr) yExpr).getName() + "$" + symbolTable.getCurrentScopeIndex());
 
         return Type.PIXEL;
     }

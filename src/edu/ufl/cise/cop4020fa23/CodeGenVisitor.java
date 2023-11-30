@@ -330,11 +330,11 @@ public class CodeGenVisitor implements ASTVisitor {
                 }
                 return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" +"FileURLIO.readImage(" + declaration.getInitializer().visit(this, arg) + ");";
             }
-            if (declaration.getInitializer().getType() == Type.IMAGE) {
+            if (declaration.getInitializer() != null && declaration.getInitializer().getType() == Type.IMAGE) {
                 if (declaration.getNameDef().getDimension() != null) {
-                    return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" +"ImageOps.copyAndResize(" + declaration.getInitializer().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getWidth().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getHeight().visit(this, arg) + ");";
+                    return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" + "ImageOps.copyAndResize(" + declaration.getInitializer().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getWidth().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getHeight().visit(this, arg) + ");";
                 }
-                return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" +"ImageOps.cloneImage(" + declaration.getInitializer().visit(this, arg) + ");";
+                return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" + "ImageOps.cloneImage(" + declaration.getInitializer().visit(this, arg) + ");";
             }
         }
 
