@@ -34,6 +34,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
           code.append("import edu.ufl.cise.cop4020fa23.runtime.*;\n\n");
           code.append("import edu.ufl.cise.cop4020fa23.runtime.ImageOps;\n\n");
+        code.append("import edu.ufl.cise.cop4020fa23.runtime.PixelOps;\n\n");
 
           code.append("import java.awt.image.BufferedImage;\n\n");
 
@@ -130,6 +131,19 @@ public class CodeGenVisitor implements ASTVisitor {
                 throw new UnsupportedOperationException("Null channelSelector in assignmentStatement");
             }
 
+        }
+        if (assignmentStatement.getlValue().getVarType() == Type.PIXEL && channelSelector != null) {
+            String channelColor = "";
+            if (channelSelector.color() == Kind.RES_red) {
+                channelColor = "Red";
+            }
+            else if (channelSelector.color() == Kind.RES_green) {
+                channelColor = "Green";
+            }
+            else if (channelSelector.color() == Kind.RES_blue) {
+                channelColor = "Blue";
+            }
+            return assignmentStatement.getlValue().visit(this, arg) + "=PixelOps.set" + channelColor + "(" + varName + ", " + exprCode + ");";
         }
         String pixStatement = (String) assignmentStatement.getE().visit(this, arg);
         System.out.println(assignmentStatement.getlValue().getType());
@@ -310,7 +324,7 @@ public class CodeGenVisitor implements ASTVisitor {
         Type varType = declaration.getNameDef().getType();
         String varInitialization = "";
         if (varType == Type.IMAGE) {
-            if (declaration.getInitializer().getType() == Type.STRING) {
+            if (declaration.getInitializer() != null && declaration.getInitializer().getType() == Type.STRING) {
                 if (declaration.getNameDef().getDimension() != null) {
                     return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" + "FileURLIO.readImage(" + declaration.getInitializer().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getWidth().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getHeight().visit(this, arg) + ")";
                 }
@@ -332,8 +346,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitDimension(Dimension dimension, Object arg) throws PLCCompilerException {
-//        return dimension.getWidth() + ", " + dimension.getHeight();
-        return null;
+       return dimension.getWidth() + ", " + dimension.getHeight();
     }
 
     @Override
@@ -377,13 +390,24 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitIfStatement(IfStatement ifStatement, Object arg) throws PLCCompilerException {
         StringBuilder ifStatementCode = new StringBuilder();
-        for (GuardedBlock guardedBlock : ifStatement.getGuardedBlocks()) {
+        List<GuardedBlock> guardedBlocks = ifStatement.getGuardedBlocks();
+        boolean firstGuard = true;
+
+        for (GuardedBlock guardedBlock : guardedBlocks) {
             String guardExprCode = (String) guardedBlock.getGuard().visit(this, arg);
             String blockCode = (String) guardedBlock.getBlock().visit(this, arg);
-            ifStatementCode.append("if (").append(guardExprCode).append(") ").append(blockCode).append("\n");
+
+            if (firstGuard) {
+                ifStatementCode.append("if (").append(guardExprCode).append(") ").append(blockCode);
+                firstGuard = false;
+            } else {
+                ifStatementCode.append("else if (").append(guardExprCode).append(") ").append(blockCode);
+            }
         }
+
         return ifStatementCode.toString();
     }
+
 
     @Override
     public Object visitLValue(LValue lValue, Object arg) throws PLCCompilerException {
