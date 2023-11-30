@@ -6,6 +6,7 @@ import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
 import edu.ufl.cise.cop4020fa23.exceptions.TypeCheckException;
 import edu.ufl.cise.cop4020fa23.runtime.ConsoleIO;
 import java.awt.Color;
+import java.awt.image.BufferedImage;
 import edu.ufl.cise.cop4020fa23.runtime.FileURLIO;
 import edu.ufl.cise.cop4020fa23.runtime.*;
 
@@ -32,6 +33,9 @@ public class CodeGenVisitor implements ASTVisitor {
           code.append("package edu.ufl.cise.cop4020fa23;\n\n");
 
           code.append("import edu.ufl.cise.cop4020fa23.runtime.*;\n\n");
+          code.append("import edu.ufl.cise.cop4020fa23.runtime.ImageOps;\n");
+
+          code.append("import java.awt.image.BufferedImage;");
 
 
           String className = program.getName();
@@ -305,6 +309,21 @@ public class CodeGenVisitor implements ASTVisitor {
         String varName = declaration.getNameDef().getJavaName();
         Type varType = declaration.getNameDef().getType();
         String varInitialization = "";
+        if (varType == Type.IMAGE) {
+            if (declaration.getInitializer().getType() == Type.STRING) {
+                if (declaration.getNameDef().getDimension() != null) {
+                    return "ImageOps.readImage(" + declaration.getInitializer().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getWidth().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getHeight().visit(this, arg) + ")";
+                }
+                return "ImageOps.readImage(" + declaration.getInitializer().visit(this, arg) + ");";
+            }
+            if (declaration.getInitializer().getType() == Type.IMAGE) {
+                if (declaration.getNameDef().getDimension() != null) {
+                    return "ImageOps.copyAndResize(" + declaration.getInitializer().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getWidth().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getHeight().visit(this, arg) + ");";
+                }
+                return "ImageOps.cloneImage(" + declaration.getInitializer().visit(this, arg) + ");";
+            }
+        }
+
         if (declaration.getInitializer() != null){
             varInitialization = " = " + declaration.getInitializer().visit(this, arg);
         }
