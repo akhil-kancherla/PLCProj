@@ -312,9 +312,9 @@ public class CodeGenVisitor implements ASTVisitor {
         if (varType == Type.IMAGE) {
             if (declaration.getInitializer().getType() == Type.STRING) {
                 if (declaration.getNameDef().getDimension() != null) {
-                    return "ImageOps.readImage(" + declaration.getInitializer().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getWidth().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getHeight().visit(this, arg) + ")";
+                    return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" + "FileURLIO.readImage(" + declaration.getInitializer().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getWidth().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getHeight().visit(this, arg) + ")";
                 }
-                return "ImageOps.readImage(" + declaration.getInitializer().visit(this, arg) + ");";
+                return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" +"FileURLIO.readImage(" + declaration.getInitializer().visit(this, arg) + ");";
             }
             if (declaration.getInitializer().getType() == Type.IMAGE) {
                 if (declaration.getNameDef().getDimension() != null) {
