@@ -127,6 +127,9 @@ public class CodeGenVisitor implements ASTVisitor {
                     return "ImageOps.copyInto((FileURLIO.readImage(" + assignmentStatement.getE() + "))," + assignmentStatement.getlValue() + ")";
                 }
             }
+            else if(pixelSelector != null && channelSelector == null){
+                return "for (int x=0; " + assignmentStatement.getlValue().getNameDef().getJavaName() +"<"+ assignmentStatement.getlValue().getNameDef().getDimension().getWidth().visit(this, arg)  + ".getWidth();x++){\n" + "for (int y=0;" + assignmentStatement.getlValue().getNameDef().getDimension().getHeight().visit(this, arg) + ".getHeight();y++){\n" + "ImageOps.setRGB(" + assignmentStatement.getlValue().getNameDef().visit(this,arg) + "," + assignmentStatement.getlValue().getNameDef().visit(this,arg);
+            }
             else if (channelSelector != null) {
                 throw new UnsupportedOperationException("Null channelSelector in assignmentStatement");
             }
@@ -324,6 +327,9 @@ public class CodeGenVisitor implements ASTVisitor {
         Type varType = declaration.getNameDef().getType();
         String varInitialization = "";
         if (varType == Type.IMAGE) {
+            if (declaration.getInitializer() == null){
+                return "final BufferedImage " + declaration.getNameDef().getJavaName() + " = " + "ImageOps.makeImage(" + declaration.getNameDef().getDimension().visit(this, arg) + ");";
+            }
             if (declaration.getInitializer() != null && declaration.getInitializer().getType() == Type.STRING) {
                 if (declaration.getNameDef().getDimension() != null) {
                     return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" + "FileURLIO.readImage(" + declaration.getInitializer().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getWidth().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getHeight().visit(this, arg) + ")";
@@ -336,6 +342,7 @@ public class CodeGenVisitor implements ASTVisitor {
                 }
                 return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" + "ImageOps.cloneImage(" + declaration.getInitializer().visit(this, arg) + ");";
             }
+
         }
 
         if (declaration.getInitializer() != null){
@@ -346,7 +353,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitDimension(Dimension dimension, Object arg) throws PLCCompilerException {
-       return dimension.getWidth() + ", " + dimension.getHeight();
+       return dimension.getWidth().visit(this, arg) + ", " + dimension.getHeight().visit(this, arg);
     }
 
     @Override

@@ -371,10 +371,14 @@ public class TypeCheckVisitor implements ASTVisitor {
 
         if (xExpr instanceof IdentExpr && symbolTable.lookup(((IdentExpr) xExpr).getName()) == null) {
             symbolTable.insert(((IdentExpr) xExpr).getName(), new SyntheticNameDef(((IdentExpr) xExpr).getName()));
+            ((SyntheticNameDef) symbolTable.lookup(((IdentExpr) xExpr).getName())).setJavaName(((IdentExpr) xExpr).getName() + "$" + symbolTable.getCurrentScopeIndex());
+
         }
 
         if (yExpr instanceof IdentExpr && symbolTable.lookup(((IdentExpr) yExpr).getName()) == null) {
             symbolTable.insert(((IdentExpr) yExpr).getName(), new SyntheticNameDef(((IdentExpr) yExpr).getName()));
+            ((SyntheticNameDef) symbolTable.lookup(((IdentExpr) yExpr).getName())).setJavaName(((IdentExpr) yExpr).getName() + "$" + symbolTable.getCurrentScopeIndex());
+
         }
 
         Type xType = (Type) xExpr.visit(this, arg);
@@ -384,8 +388,6 @@ public class TypeCheckVisitor implements ASTVisitor {
             throw new TypeCheckException("Pixel selector coordinates must be of integer type");
         }
 
-        ((SyntheticNameDef) symbolTable.lookup(((IdentExpr) xExpr).getName())).setJavaName(((IdentExpr) xExpr).getName() + "$" + symbolTable.getCurrentScopeIndex());
-        ((SyntheticNameDef) symbolTable.lookup(((IdentExpr) yExpr).getName())).setJavaName(((IdentExpr) yExpr).getName() + "$" + symbolTable.getCurrentScopeIndex());
 
         return Type.PIXEL;
     }
