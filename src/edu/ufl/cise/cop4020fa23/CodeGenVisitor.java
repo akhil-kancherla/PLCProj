@@ -128,7 +128,7 @@ public class CodeGenVisitor implements ASTVisitor {
                 }
             }
             else if(pixelSelector != null && channelSelector == null){
-                return "for (int x=0; " + assignmentStatement.getlValue().getNameDef().getJavaName() +"<"+ assignmentStatement.getlValue().getNameDef().getDimension().getWidth().visit(this, arg)  + ".getWidth();x++){\n" + "for (int y=0;" + assignmentStatement.getlValue().getNameDef().getDimension().getHeight().visit(this, arg) + ".getHeight();y++){\n" + "ImageOps.setRGB(" + assignmentStatement.getlValue().getNameDef().visit(this,arg) + "," + assignmentStatement.getlValue().getNameDef().visit(this,arg);
+                return "for (int x=0; x<" + assignmentStatement.getlValue().getNameDef().getJavaName()   + ".getWidth();x++){\n" + "for (int y=0; y<" + assignmentStatement.getlValue().getNameDef().getJavaName() + ".getHeight();y++){\n" + "ImageOps.setRGB(" + assignmentStatement.getlValue().getNameDef().visit(this,arg) + "," + "x,y,(y>" + assignmentStatement.getlValue().getNameDef().getDimension().getHeight().visit(this, arg) + "/2)?" + "0xff0000ff" +":" + "0xff00ff00" + "); } };\n";
             }
             else if (channelSelector != null) {
                 throw new UnsupportedOperationException("Null channelSelector in assignmentStatement");
