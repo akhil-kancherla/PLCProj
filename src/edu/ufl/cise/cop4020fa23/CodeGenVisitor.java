@@ -109,7 +109,6 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
-
         String varName = (String) assignmentStatement.getlValue().visit(this, arg);
         String exprCode = (String) assignmentStatement.getE().visit(this, arg);
         PixelSelector pixelSelector = assignmentStatement.getlValue().getPixelSelector();
@@ -121,7 +120,7 @@ public class CodeGenVisitor implements ASTVisitor {
                     return "ImageOps.copyInto(" + assignmentStatement.getE() + ", " + assignmentStatement.getlValue() + ")";
                 }
                 else if (exprType == Type.PIXEL) {
-                    return "ImageOps.setAllPixels(" + assignmentStatement.getlValue() + ", " + assignmentStatement.getE() + ")";
+                    return "ImageOps.setAllPixels(" + assignmentStatement.getlValue().visit(this,arg) + ", " + assignmentStatement.getE().visit(this, arg) + ");\n";
                 }
                 else if (exprType == Type.STRING) {
                     return "ImageOps.copyInto((FileURLIO.readImage(" + assignmentStatement.getE() + "))," + assignmentStatement.getlValue() + ")";

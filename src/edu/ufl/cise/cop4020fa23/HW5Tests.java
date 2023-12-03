@@ -119,7 +119,6 @@ public class test{
 public static int apply(){
 return 255;
 }
-
 }
      */
     @Test
