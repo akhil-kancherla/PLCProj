@@ -309,7 +309,16 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitChannelSelector(ChannelSelector channelSelector, Object arg) throws PLCCompilerException {
-        return channelSelector.color();
+        if (channelSelector.color() == Kind.RES_red) {
+            return 0;
+        }
+        if (channelSelector.color() == Kind.RES_green) {
+            return 1;
+        }
+        if (channelSelector.color() == Kind.RES_blue) {
+            return 2;
+        }
+        throw new CodeGenException("Channel selector not R/G/B");
     }
 
     @Override
@@ -323,6 +332,7 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
         String varName = declaration.getNameDef().getJavaName();
+        System.out.println(declaration.getNameDef().getName() + ", " + declaration.getNameDef().getType());
         Type varType = declaration.getNameDef().getType();
         String varInitialization = "";
         if (varType == Type.IMAGE) {
@@ -331,7 +341,7 @@ public class CodeGenVisitor implements ASTVisitor {
             }
             if (declaration.getInitializer() != null && declaration.getInitializer().getType() == Type.STRING) {
                 if (declaration.getNameDef().getDimension() != null) {
-                    return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" + "FileURLIO.readImage(" + declaration.getInitializer().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getWidth().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getHeight().visit(this, arg) + ")";
+                    return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" + "FileURLIO.readImage(" + declaration.getInitializer().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getWidth().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getHeight().visit(this, arg) + ");";
                 }
                 return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" +"FileURLIO.readImage(" + declaration.getInitializer().visit(this, arg) + ");";
             }
@@ -439,9 +449,49 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitPostfixExpr(PostfixExpr postfixExpr, Object arg) throws PLCCompilerException {
-        String exprCode = (String) postfixExpr.primary().visit(this, arg);
-        String pixelSelectorCode = (String) postfixExpr.pixel().visit(this, arg);
-        return exprCode + pixelSelectorCode;
+        Expr expr = postfixExpr.primary();
+        PixelSelector pixelSelector = postfixExpr.pixel();
+        ChannelSelector channelSelector = postfixExpr.channel();
+        StringBuilder sb = new StringBuilder();
+
+        if (expr.getType() == Type.PIXEL) {
+            int color = (int) channelSelector.visit(this, arg);
+            switch (color) {
+                case 0 -> sb.append("PixelOps.red(");
+                case 1 -> sb.append("PixelOps.green(");
+                case 2 -> sb.append("PixelOps.blue(");
+            }
+            String exprStr = (String) expr.visit(this, arg);
+            sb.append(exprStr);
+            sb.append(")");
+            return sb.toString();
+        }
+        if (expr.getType() != Type.IMAGE) {
+            throw new CodeGenException("Postfix type should be IMG");
+        }
+
+        if (pixelSelector != null && channelSelector == null) {
+            sb.append("ImageOps.getRGB(");
+            String exprStr = (String) expr.visit(this, arg);
+            sb.append(exprStr);
+            sb.append(", ");
+            String pixStr = (String) pixelSelector.visit(this, arg);
+            sb.append(pixStr);
+            sb.append("))");
+        }
+        else if (pixelSelector != null && channelSelector != null) {
+            int color = (int) channelSelector.visit(this, arg);
+
+            switch (color) {
+                case 0 -> sb.append("ImageOps.extractRed(");
+                case 1 -> sb.append("ImageOps.extractGrn(");
+                case 2 -> sb.append("ImageOps.extractBlu(");
+            }
+            String exprStr = (String) expr.visit(this, arg);
+            sb.append(exprStr);
+            sb.append(")");
+        }
+        return sb.toString();
     }
 
 
@@ -508,6 +558,24 @@ public class CodeGenVisitor implements ASTVisitor {
                 return Color.PINK;
             case "GREEN":
                 return Color.GREEN;
+            case "MAGENTA":
+                return Color.MAGENTA;
+            case "BLACK":
+                return Color.BLACK;
+            case "CYAN":
+                return Color.CYAN;
+            case "DARK_GRAY":
+                return Color.DARK_GRAY;
+            case "GRAY":
+                return Color.GRAY;
+            case "LIGHT_GRAY":
+                return Color.LIGHT_GRAY;
+            case "ORANGE":
+                return Color.ORANGE;
+            case "WHITE":
+                return Color.WHITE;
+            case "YELLOW":
+                return Color.YELLOW;
             default:
                 throw new PLCCompilerException("Unknown PLC Lang constant: " + plcLangConstant);
         }

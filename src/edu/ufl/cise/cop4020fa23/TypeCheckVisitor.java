@@ -179,8 +179,9 @@ public class TypeCheckVisitor implements ASTVisitor {
             e.visit(this, arg);
         }
         nameDef.visit(this, arg);
-        if (!(e == null || e.getType() == nameDef.getType() || (e.getType() == Type.STRING && nameDef.getType() == Type.IMAGE))) {
-            throw new TypeCheckException();
+        if ((e == null || e.getType() == nameDef.getType() || (e.getType() == Type.STRING && nameDef.getType() == Type.IMAGE))) {
+            Type type = nameDef.getType();
+            return type;
         }
 
         // Insert the variable into the symbol table
@@ -259,10 +260,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCCompilerException {
-        if (isSpecialIdentifier(identExpr.getName())) {
-            identExpr.setType(Type.INT);
-            return Type.INT;
-        } else if (arg instanceof PixelSelector && ((PixelSelector) arg).isInLValueContext()) {
+        if (arg instanceof PixelSelector && ((PixelSelector) arg).isInLValueContext()) {
             // If the identifier is used in a pixel selector in an LValue context,
             // implicitly declare it by adding it to the symbol table
             NameDef nameDef = new SyntheticNameDef(identExpr.getName());
@@ -347,7 +345,7 @@ public class TypeCheckVisitor implements ASTVisitor {
         String uniqueName = nameDef.getName() + "$" + symbolTable.getCurrentScopeIndex();
         nameDef.setJavaName(uniqueName);
 
-        symbolTable.insert(uniqueName, nameDef);
+        symbolTable.insert(nameDef.getName(), nameDef);
 
         if (nameDef.getDimension() != null) {
             nameDef.getDimension().visit(this, arg);
@@ -394,9 +392,19 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitPostfixExpr(PostfixExpr postfixExpr, Object arg) throws PLCCompilerException {
+        Expr expr = postfixExpr.primary();
+        expr.visit(this, arg);
         Type primaryType = (Type) postfixExpr.primary().getType();
         PixelSelector pixelSelector = postfixExpr.pixel();
+        if (pixelSelector != null) {
+            pixelSelector.visit(this, arg);
+        }
+
         ChannelSelector channelSelector = postfixExpr.channel();
+        if (channelSelector != null) {
+            channelSelector.visit(this, arg);
+        }
+
         if (primaryType == Type.IMAGE && pixelSelector != null && channelSelector == null) {
             postfixExpr.setType(Type.PIXEL);
 
@@ -423,7 +431,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 //            postfixExpr.setType(primaryType);
 //        }
 
-        return postfixExpr.primary().getType();
+        return postfixExpr.getType();
     }
 
 
@@ -507,6 +515,18 @@ public class TypeCheckVisitor implements ASTVisitor {
                 }
                 unaryExpr.setType(Type.INT);
                 return Type.INT;
+            case RES_width:
+                if (operandType != Type.IMAGE) {
+                    throw new TypeCheckException("Invalid type for 'width' operation");
+                }
+                unaryExpr.setType(Type.IMAGE);
+                return Type.IMAGE;
+            case RES_height:
+                if (operandType != Type.IMAGE) {
+                    throw new TypeCheckException("Invalid type for 'height' operation");
+                }
+                unaryExpr.setType(Type.IMAGE);
+                return Type.IMAGE;
 
             default:
                 throw new TypeCheckException("Unknown unary operator: " + unaryExpr.getOp());
@@ -528,13 +548,14 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitConstExpr(ConstExpr constExpr, Object arg) throws PLCCompilerException {
-        String constName = constExpr.getName();
-        if ("RED".equals(constName) || "GREEN".equals(constName) || "BLUE".equals(constName) || "PINK".equals(constName)) {
-            constExpr.setType(Type.PIXEL);
-            return Type.PIXEL; // Return PIXEL type for pixel constants
+        if (constExpr.getName().equals("Z")) {
+            constExpr.setType(Type.INT);
+            return Type.INT;
         }
-        constExpr.setType(Type.INT);
-        return Type.INT;
+        else {
+            constExpr.setType(Type.PIXEL);
+            return Type.PIXEL;
+        }
     }
 
 
@@ -544,7 +565,7 @@ public class TypeCheckVisitor implements ASTVisitor {
         // Add the logic to identify if 'name' is a special identifier like 'z'
         // This might be a predefined list or some pattern that these identifiers follow
         // For example, if 'z' is the only special identifier, you can directly check for it
-        return "z" == (name) || "b" == (name) || "y" == (name); // Adjust this condition based on your language's semantics
+        return "z".equals(name) || "b".equals(name) || "y".equals(name); // Adjust this condition based on your language's semantics
     }
 
     private boolean isValidChannel(String channel) {
