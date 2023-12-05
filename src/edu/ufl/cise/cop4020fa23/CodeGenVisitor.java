@@ -123,11 +123,14 @@ public class CodeGenVisitor implements ASTVisitor {
                     return "ImageOps.setAllPixels(" + assignmentStatement.getlValue().visit(this,arg) + ", " + assignmentStatement.getE().visit(this, arg) + ");\n";
                 }
                 else if (exprType == Type.STRING) {
-                    return "ImageOps.copyInto((FileURLIO.readImage(" + assignmentStatement.getE() + "))," + assignmentStatement.getlValue() + ")";
+                    return "ImageOps.copyInto((FileURLIO.readImage(" + assignmentStatement.getE() + "))," + assignmentStatement.getlValue() + ")\n";
                 }
             }
             else if(pixelSelector != null && channelSelector == null){
-                return "for (int x=0; x<" + assignmentStatement.getlValue().getNameDef().getJavaName()   + ".getWidth();x++){\n" + "for (int y=0; y<" + assignmentStatement.getlValue().getNameDef().getJavaName() + ".getHeight();y++){\n" + "ImageOps.setRGB(" + assignmentStatement.getlValue().getNameDef().visit(this,arg) + "," + "x,y,(y>" + assignmentStatement.getlValue().getNameDef().getDimension().getHeight().visit(this, arg) + "/2)?" + "0xff0000ff" +":" + "0xff00ff00" + "); } };\n";
+                String xexpr = (String) assignmentStatement.getlValue().getPixelSelector().xExpr().visit(this,arg);
+                String yexpr = (String) assignmentStatement.getlValue().getPixelSelector().yExpr().visit(this,arg);
+                System.out.println(assignmentStatement.getlValue().getPixelSelector().xExpr().visit(this,arg));
+                return "for (int " + xexpr + "=0; "+xexpr+"<" + assignmentStatement.getlValue().getNameDef().getJavaName()   + ".getWidth();"+ xexpr +"++){" + "for (int " + yexpr + "=0; "+ yexpr +"<" + assignmentStatement.getlValue().getNameDef().getJavaName() + ".getHeight();"+ yexpr + "++){\n" + "ImageOps.setRGB(" + assignmentStatement.getlValue().getNameDef().visit(this,arg) + "," + xexpr+","+ yexpr+"," + assignmentStatement.getE().visit(this,arg) + "); } };\n";
             }
             else if (channelSelector != null) {
                 throw new UnsupportedOperationException("Null channelSelector in assignmentStatement");
@@ -475,9 +478,13 @@ public class CodeGenVisitor implements ASTVisitor {
             String exprStr = (String) expr.visit(this, arg);
             sb.append(exprStr);
             sb.append(", ");
-            String pixStr = (String) pixelSelector.visit(this, arg);
-            sb.append(pixStr);
-            sb.append("))");
+            String xExpr = (String) pixelSelector.xExpr().visit(this,arg);
+            String yExpr = (String) pixelSelector.yExpr().visit(this,arg);
+            //System.out.println(pixStr);
+            sb.append(xExpr);
+            sb.append(", ");
+            sb.append(yExpr);
+            sb.append(")");
         }
         else if (pixelSelector != null && channelSelector != null) {
             int color = (int) channelSelector.visit(this, arg);

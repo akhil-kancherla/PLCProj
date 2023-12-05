@@ -477,7 +477,7 @@ class CodeGenTest_Hw5_starter {
 				   ^im;
 				   :>
 				   """;
-		BufferedImage result = (BufferedImage) PLCLangExec.runCode(packageName, source, 200, 300);
+				BufferedImage result = (BufferedImage) PLCLangExec.runCode(packageName, source, 200, 300);
 		show(result);
 		BufferedImage expected = ImageOps.makeImage(200, 300);
 		for (int y = 0; y < 300; y++)
