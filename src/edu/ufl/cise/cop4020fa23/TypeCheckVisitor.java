@@ -42,9 +42,9 @@ public class TypeCheckVisitor implements ASTVisitor {
             if (rhsType != Type.IMAGE && !(rhs instanceof ExpandedPixelExpr)) {
                 throw new TypeCheckException("Right-hand side of assignment must be an image or a pixel expression when assigning to an image type.");
             }
-            if (!(rhs instanceof ExpandedPixelExpr)) {
-                throw new TypeCheckException("Right-hand side of assignment to image must be a pixel expression.");
-            }
+//            if (!(rhs instanceof ExpandedPixelExpr)) {
+//                throw new TypeCheckException("Right-hand side of assignment to image must be a pixel expression.");
+//            }
             ExpandedPixelExpr expandedPixelExpr = (ExpandedPixelExpr) rhs;
             // Check each component of the pixel
             if (!((Type) expandedPixelExpr.getRed().visit(this, arg) == Type.INT &&

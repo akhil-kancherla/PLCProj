@@ -299,7 +299,7 @@ public class CodeGenVisitor implements ASTVisitor {
         StringBuilder javaCode = new StringBuilder();
         javaCode.append("{\n");
         for (Block.BlockElem blockElem : block.getElems()) {
-            javaCode.append((String) blockElem.visit(this, arg));
+            javaCode.append( blockElem.visit(this, arg));
         }
         javaCode.append("}\n");
         return javaCode.toString();
@@ -372,20 +372,27 @@ public class CodeGenVisitor implements ASTVisitor {
     }
 
     @Override
-    public Object visitDoStatement(DoStatement doStatement, Object arg) throws PLCCompilerException {
-        StringBuilder doStatementCode = new StringBuilder();
-
-        doStatementCode.append("do {\n");
-
-        for (GuardedBlock guardedBlock : doStatement.getGuardedBlocks()) {
-            String guardExprCode = (String) guardedBlock.getGuard().visit(this, arg);
-            String blockCode = (String) guardedBlock.getBlock().visit(this, arg);
-            doStatementCode.append("if (").append(guardExprCode).append(") ").append(blockCode).append("\n");
+    public Object visitDoStatement(DoStatement doStatement, Object arg) throws PLCCompilerException {StringBuilder sb = new StringBuilder();
+        List<GuardedBlock> guardedBlocks = doStatement.getGuardedBlocks();
+        sb.append("do{\n");
+        sb.append("if(");
+        for(int i = 0; i < guardedBlocks.size();i++){
+            if(i>0)sb.append("else if(");
+            sb.append(guardedBlocks.get(i).getGuard().visit(this,arg));
+            sb.append("){\n");
+            sb.append(guardedBlocks.get(i).getBlock().visit(this,arg));
+            sb.append("}\n");
         }
-
-        doStatementCode.append("} while (false);\n");
-
-        return doStatementCode.toString();
+        sb.append("}");
+        sb.append("while(");
+        for(int i = 0; i < guardedBlocks.size();i++){
+            if(i>0)sb.append("||");
+            sb.append("(");
+            sb.append(guardedBlocks.get(i).getGuard().visit(this,arg));
+            sb.append(")");
+        }
+        sb.append(");\n");
+        return sb;
     }
 
 
