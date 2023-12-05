@@ -175,21 +175,23 @@ public class TypeCheckVisitor implements ASTVisitor {
             throw new TypeCheckException("Variable already declared: " + declaration.getNameDef().getName());
         }
         NameDef nameDef = declaration.getNameDef();
-        Expr e = declaration.getInitializer();
+        Expr init = declaration.getInitializer();
 
-        if (e != null) {
-            e.visit(this, arg);
+        if (init != null) {
+            init.visit(this, arg);
         }
         nameDef.visit(this, arg);
-        if ((e == null || e.getType() == nameDef.getType() || (e.getType() == Type.STRING && nameDef.getType() == Type.IMAGE))) {
+
+        if ((init == null || init.getType() == nameDef.getType() || (init.getType() == Type.STRING && nameDef.getType() == Type.IMAGE))) {
             Type type = nameDef.getType();
             return type;
         }
 
         // Insert the variable into the symbol table
-        symbolTable.insert(nameDef.getName(), nameDef);
-
-        return nameDef.getType();
+//        symbolTable.insert(nameDef.getName(), nameDef);
+//
+//        return nameDef.getType();
+            throw new TypeCheckException();
 
     }
 
@@ -521,14 +523,14 @@ public class TypeCheckVisitor implements ASTVisitor {
                 if (operandType != Type.IMAGE) {
                     throw new TypeCheckException("Invalid type for 'width' operation");
                 }
-                unaryExpr.setType(Type.IMAGE);
-                return Type.IMAGE;
+                unaryExpr.setType(Type.INT);
+                return Type.INT;
             case RES_height:
                 if (operandType != Type.IMAGE) {
                     throw new TypeCheckException("Invalid type for 'height' operation");
                 }
-                unaryExpr.setType(Type.IMAGE);
-                return Type.IMAGE;
+                unaryExpr.setType(Type.INT);
+                return Type.INT;
 
             default:
                 throw new TypeCheckException("Unknown unary operator: " + unaryExpr.getOp());
