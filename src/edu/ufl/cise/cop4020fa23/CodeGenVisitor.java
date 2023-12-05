@@ -554,6 +554,14 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws PLCCompilerException {
         String exprCode = (String) writeStatement.getExpr().visit(this, arg);
+        StringBuilder sb = new StringBuilder();
+        Type exprType = writeStatement.getExpr().getType();
+        if (exprType == Type.PIXEL) {
+            sb.append("ConsoleIO.writePixel(");
+            sb.append(writeStatement.getExpr().visit(this,arg).toString());
+            sb.append(");");
+            return sb;
+        }
         return "ConsoleIO.write(" + exprCode + ");\n";
     }
 
