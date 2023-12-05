@@ -123,7 +123,7 @@ public class CodeGenVisitor implements ASTVisitor {
                     return "ImageOps.setAllPixels(" + assignmentStatement.getlValue().visit(this,arg) + ", " + assignmentStatement.getE().visit(this, arg) + ");\n";
                 }
                 else if (exprType == Type.STRING) {
-                    return "ImageOps.copyInto((FileURLIO.readImage(" + assignmentStatement.getE() + "))," + assignmentStatement.getlValue() + ")\n";
+                    return "ImageOps.copyInto((FileURLIO.readImage(" + assignmentStatement.getE().visit(this,arg) + "))," + assignmentStatement.getlValue().visit(this,arg) + ");\n";
                 }
             }
             else if(pixelSelector != null && channelSelector == null){
@@ -224,30 +224,6 @@ public class CodeGenVisitor implements ASTVisitor {
             return binary.toString();
         }
 
-//        String leftExprCode = (String) binaryExpr.getLeftExpr().visit(this, arg);
-//        String rightExprCode = (String) binaryExpr.getRightExpr().visit(this, arg);
-//        if (binaryExpr.getOpKind() == Kind.EXP) {
-//            return "((int)Math.round(Math.pow(" + leftExprCode + "," + rightExprCode + ")))";
-//        } else if (binaryExpr.getOpKind() == Kind.PLUS) {
-//            if (isImageType(binaryExpr.getLeftExpr().getType()) && isImageType(binaryExpr.getRightExpr().getType())) {
-//                return "ImageOps.binaryImageImageOp(" + leftExprCode + ", " + rightExprCode + ")";
-//            } else if (isPixelType(binaryExpr.getLeftExpr().getType()) && isPixelType(binaryExpr.getRightExpr().getType())) {
-//                return "ImageOps.binaryPackedPixelPixelOp(ImageOps.OP.PLUS, " + leftExprCode + ", " + rightExprCode + ")";
-//            } else if (isImageType(binaryExpr.getLeftExpr().getType()) && isPixelType(binaryExpr.getRightExpr().getType())) {
-//                return "ImageOps.binaryImagePixelOp(ImageOps.OP.PLUS, " + leftExprCode + ", " + rightExprCode + ")";
-//            } else if (isPixelType(binaryExpr.getLeftExpr().getType()) && isImageType(binaryExpr.getRightExpr().getType())) {
-//                return "ImageOps.binaryImagePixelOp(ImageOps.OP.PLUS, " + rightExprCode + ", " + leftExprCode + ")";
-//            }
-//        }
-//        else if (binaryExpr.getOpKind() == Kind.ASSIGN) {
-//            if (isPixelType(binaryExpr.getLeftExpr().getType()) && binaryExpr.getRightExpr().getType() == Type.INT) {
-//                return "ImageOps.binaryPackedPixelIntOp(" + binaryExpr.getOpKind() + ", " + leftExprCode + ", " + rightExprCode + ")";
-//            }
-//        }
-//
-//
-//
-//        return leftExprCode + " " + convert(binaryExpr.getOp().kind()) + " " + rightExprCode;
 
 
     private boolean isImageType(Type type) {

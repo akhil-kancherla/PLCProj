@@ -38,11 +38,11 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 
         // Special handling for assignments to image types
-        if (lhsType == Type.IMAGE) {
-            if (rhsType != Type.IMAGE && !(rhs instanceof ExpandedPixelExpr)) {
-                throw new TypeCheckException("Right-hand side of assignment must be an image or a pixel expression when assigning to an image type.");
-            }
-        }
+//        if (lhsType == Type.IMAGE) {
+//            if (rhsType != Type.IMAGE && !(rhs instanceof ExpandedPixelExpr)) {
+//                throw new TypeCheckException("Right-hand side of assignment must be an image or a pixel expression when assigning to an image type.");
+//            }
+//        }
 
         // If the variable is declared, set it as initialized
         lValueNameDef.setInitialized(true);
