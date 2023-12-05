@@ -117,7 +117,7 @@ public class CodeGenVisitor implements ASTVisitor {
         if (assignmentStatement.getlValue().getVarType() == Type.IMAGE) {
             if (pixelSelector == null && channelSelector == null) {
                 if (exprType == Type.IMAGE) {
-                    return "ImageOps.copyInto(" + assignmentStatement.getE() + ", " + assignmentStatement.getlValue() + ")";
+                    return "ImageOps.copyInto(" + assignmentStatement.getE().visit(this,arg) + ", " + assignmentStatement.getlValue().visit(this,arg) + ");";
                 }
                 else if (exprType == Type.PIXEL) {
                     return "ImageOps.setAllPixels(" + assignmentStatement.getlValue().visit(this,arg) + ", " + assignmentStatement.getE().visit(this, arg) + ");\n";
