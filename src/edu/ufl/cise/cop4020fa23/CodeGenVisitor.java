@@ -490,6 +490,17 @@ public class CodeGenVisitor implements ASTVisitor {
             int color = (int) channelSelector.visit(this, arg);
 
             switch (color) {
+                case 0 -> sb.append("PixelOps.red(ImageOps.getRGB(" + expr.visit(this,arg) + "," + postfixExpr.pixel().xExpr().visit(this,arg)+","+ postfixExpr.pixel().yExpr().visit(this,arg));
+                case 1 -> sb.append("PixelOps.green(ImageOps.getRGB(" + expr.visit(this,arg) + "," + postfixExpr.pixel().xExpr().visit(this,arg)+","+ postfixExpr.pixel().yExpr().visit(this,arg));
+                case 2 -> sb.append("PixelOps.blue(ImageOps.getRGB(" + expr.visit(this,arg) + "," + postfixExpr.pixel().xExpr().visit(this,arg)+","+ postfixExpr.pixel().yExpr().visit(this,arg));
+            }
+            String exprStr = (String) expr.visit(this, arg);
+            //sb.append(exprStr);
+            sb.append("))");
+        } else if (pixelSelector == null && channelSelector != null){
+            int color = (int) channelSelector.visit(this, arg);
+
+            switch (color) {
                 case 0 -> sb.append("ImageOps.extractRed(");
                 case 1 -> sb.append("ImageOps.extractGrn(");
                 case 2 -> sb.append("ImageOps.extractBlu(");

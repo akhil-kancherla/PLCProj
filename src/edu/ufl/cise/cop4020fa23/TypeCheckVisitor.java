@@ -35,6 +35,8 @@ public class TypeCheckVisitor implements ASTVisitor {
         Expr rhs = assignmentStatement.getE();
         Type rhsType = (Type) rhs.visit(this, arg);
 
+
+
         // Special handling for assignments to image types
         if (lhsType == Type.IMAGE) {
             if (rhsType != Type.IMAGE && !(rhs instanceof ExpandedPixelExpr)) {
@@ -137,9 +139,9 @@ public class TypeCheckVisitor implements ASTVisitor {
         String channel = channelSelector.color().name();
 
         // Verify that the channel is a valid identifier (e.g., "red", "green", "blue").
-        if (!isValidChannel(channel)) {
-            throw new TypeCheckException("Invalid channel identifier: " + channel);
-        }
+//        if (!isValidChannel(channel)) {
+//            throw new TypeCheckException("Invalid channel identifier: " + channel);
+//        }
 
         // The type of a channel selector is INT since channels are individual color components.
         return Type.INT;
