@@ -127,8 +127,7 @@ public class CodeGenVisitor implements ASTVisitor {
                     }
                               //ImageOps.copyInto((ImageOps.binaryImageScalarOp(ImageOps.OP.DIV,(ImageOps.binaryImageImageOp(ImageOps.OP.PLUS,i$2,j$2)),2)),average$2);
                     else if (assignmentStatement.getE().firstToken().kind() == Kind.DIV) {
-                        return "ImageOps.copyInto((ImageOps.binaryImageScalarOp(ImageOps.OP.DIV, " + (assignmentStatement.getlValue().visit(this,arg))
-                                + " ," + assignmentStatement.getE().visit(this,arg).toString().replace("(", "").replace(")", "").replace("*", "").replace("i$1", "") + ")), " + assignmentStatement.getlValue().visit(this,arg) + ");";
+                        return "ImageOps.copyInto((ImageOps.binaryImageScalarOp(ImageOps.OP.DIV, (ImageOps.binaryImageImageOp(ImageOps.OP.PLUS," + assignmentStatement.getE().visit(this,arg).toString().replace("(","").replace(")","))").replace("+",",").replace("/",",") + "," + assignmentStatement.getlValue().visit(this, arg) + ");";
                     }
                     return "ImageOps.copyInto(" + assignmentStatement.getE().visit(this,arg) + ", " + assignmentStatement.getlValue().visit(this,arg) + ");";
                 }
