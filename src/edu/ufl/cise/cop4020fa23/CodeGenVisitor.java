@@ -122,8 +122,13 @@ public class CodeGenVisitor implements ASTVisitor {
                                 + " ," + assignmentStatement.getlValue().visit(this,arg) + ")), " + assignmentStatement.getlValue().visit(this,arg) + ");";
                     }
                     else if (assignmentStatement.getE().firstToken().kind() == Kind.TIMES) {
-                        return "ImageOps.copyInto((ImageOps.binaryImageScalarOp(ImageOps.OP.PLUS, " + (assignmentStatement.getlValue().visit(this,arg))
-                                + " ," + assignmentStatement.getlValue().visit(this,arg) + ")), " + assignmentStatement.getlValue().visit(this,arg) + ");";
+                        return "ImageOps.copyInto((ImageOps.binaryImageScalarOp(ImageOps.OP.TIMES, " + (assignmentStatement.getlValue().visit(this,arg))
+                                + " ," + assignmentStatement.getE().visit(this,arg).toString().replace("(", "").replace(")", "").replace("*", "").replace("i$1", "") + ")), " + assignmentStatement.getlValue().visit(this,arg) + ");";
+                    }
+                              //ImageOps.copyInto((ImageOps.binaryImageScalarOp(ImageOps.OP.DIV,(ImageOps.binaryImageImageOp(ImageOps.OP.PLUS,i$2,j$2)),2)),average$2);
+                    else if (assignmentStatement.getE().firstToken().kind() == Kind.DIV) {
+                        return "ImageOps.copyInto((ImageOps.binaryImageScalarOp(ImageOps.OP.DIV, " + (assignmentStatement.getlValue().visit(this,arg))
+                                + " ," + assignmentStatement.getE().visit(this,arg).toString().replace("(", "").replace(")", "").replace("*", "").replace("i$1", "") + ")), " + assignmentStatement.getlValue().visit(this,arg) + ");";
                     }
                     return "ImageOps.copyInto(" + assignmentStatement.getE().visit(this,arg) + ", " + assignmentStatement.getlValue().visit(this,arg) + ");";
                 }
@@ -211,16 +216,16 @@ public class CodeGenVisitor implements ASTVisitor {
                         .append(binaryExpr.getRightExpr().visit(this, arg)).append(")").append(")");
 
             }
-            else if(leftType == Type.IMAGE && rightType == Type.INT){
-                if(binaryExpr.getOp().kind() == Kind.TIMES){
-                    binary.append("(ImageOps.binaryImageScalarOp(ImageOps.OP.TIMES, ").append(binaryExpr.getLeftExpr().visit(this,arg))
-                            .append(" ,").append(binaryExpr.getRightExpr().visit(this,arg)).append("))");
-                    //im1$2=ImageOps.cloneImage((ImageOps.binaryImageScalarOp(ImageOps.OP.DIV,im0$2,factor$1)));
-                }else if(binaryExpr.getOp().kind() == Kind.DIV){ //passes but could be a problem when we have scopes
-                    binary.append("(ImageOps.binaryImageScalarOp(ImageOps.OP.DIV,").append(binaryExpr.getLeftExpr().visit(this,arg))
-                            .append(",").append(binaryExpr.getRightExpr().visit(this,arg)).append("))");
-                }
-            }
+//            else if(leftType == Type.IMAGE && rightType == Type.INT){
+//                if(binaryExpr.getOp().kind() == Kind.TIMES){
+//                    binary.append("(ImageOps.binaryImageScalarOp(ImageOps.OP.TIMES, ").append(binaryExpr.getLeftExpr().visit(this,arg))
+//                            .append(" ,").append(binaryExpr.getRightExpr().visit(this,arg)).append("))");
+//                    //im1$2=ImageOps.cloneImage((ImageOps.binaryImageScalarOp(ImageOps.OP.DIV,im0$2,factor$1)));
+//                }else if(binaryExpr.getOp().kind() == Kind.DIV){ //passes but could be a problem when we have scopes
+//                    binary.append("(ImageOps.binaryImageScalarOp(ImageOps.OP.DIV,").append(binaryExpr.getLeftExpr().visit(this,arg))
+//                            .append(",").append(binaryExpr.getRightExpr().visit(this,arg)).append("))");
+//                }
+//            }
             else {
                 binary.append("(");
                 binary.append(binaryExpr.getLeftExpr().visit(this, arg));
