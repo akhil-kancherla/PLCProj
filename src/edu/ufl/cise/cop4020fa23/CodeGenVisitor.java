@@ -146,15 +146,23 @@ public class CodeGenVisitor implements ASTVisitor {
                 String xexpr = (String) assignmentStatement.getlValue().getPixelSelector().xExpr().visit(this,arg);
                 String yexpr = (String) assignmentStatement.getlValue().getPixelSelector().yExpr().visit(this,arg);
                 System.out.println(assignmentStatement.getlValue().getPixelSelector().xExpr().visit(this,arg));
-                System.out.println("xexpr.charAt(2)=" + xexpr.charAt(2) + "\nassignmentStatement.getlValue().getNameDef().getJavaName().charAt(2)="+assignmentStatement.getlValue().getNameDef().getJavaName().charAt(2));
-                if (xexpr.charAt(2) < assignmentStatement.getlValue().getNameDef().getJavaName().charAt(2)) {
-                    return "ImageOps.setRGB(" + assignmentStatement.getlValue().getNameDef().visit(this,arg) + "," + xexpr+","+ yexpr+","
-                            + assignmentStatement.getE().visit(this,arg) + ");\n";
+                try {
+                    if (xexpr.charAt(2) < assignmentStatement.getlValue().getNameDef().getJavaName().charAt(2)) {
+                        return "ImageOps.setRGB(" + assignmentStatement.getlValue().getNameDef().visit(this,arg) + "," + xexpr+","+ yexpr+","
+                                + assignmentStatement.getE().visit(this,arg) + ");\n";
+                    }
+                }
+                catch(StringIndexOutOfBoundsException e) {
+                    return "for (int " + xexpr + "=0; "+xexpr+"<" + assignmentStatement.getlValue().getNameDef().getJavaName() + ".getWidth();\n"+ xexpr +"++){"
+                            + "for (int " + yexpr + "=0; "+ yexpr +"<" + assignmentStatement.getlValue().getNameDef().getJavaName() + ".getHeight();\n"+ yexpr
+                            + "++){\n" + "ImageOps.setRGB(" + assignmentStatement.getlValue().getNameDef().visit(this,arg) + "," + xexpr+","+ yexpr+","
+                            + assignmentStatement.getE().visit(this,arg) + "); } };\n";
                 }
                 return "for (int " + xexpr + "=0; "+xexpr+"<" + assignmentStatement.getlValue().getNameDef().getJavaName() + ".getWidth();\n"+ xexpr +"++){"
                         + "for (int " + yexpr + "=0; "+ yexpr +"<" + assignmentStatement.getlValue().getNameDef().getJavaName() + ".getHeight();\n"+ yexpr
                         + "++){\n" + "ImageOps.setRGB(" + assignmentStatement.getlValue().getNameDef().visit(this,arg) + "," + xexpr+","+ yexpr+","
                         + assignmentStatement.getE().visit(this,arg) + "); } };\n";
+
             }
             else if (channelSelector != null) {
                 throw new UnsupportedOperationException("Null channelSelector in assignmentStatement");

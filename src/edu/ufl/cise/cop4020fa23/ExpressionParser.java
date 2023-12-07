@@ -69,9 +69,9 @@ public class ExpressionParser implements IParser {
 	@Override
 	public AST parse() throws PLCCompilerException {
 		Expr e = expr();
-		if (currentToken.kind() != EOF) {
-			throw new SyntaxException("Expected end of input but found " + currentToken.kind());
-		}
+//		if (currentToken.kind() != EOF) {
+//			throw new SyntaxException("Expected end of input but found " + currentToken.kind());
+//		}
 		return e;
 	}
 
@@ -199,6 +199,9 @@ public class ExpressionParser implements IParser {
 		if (currentToken.kind() == COLON) {
 			IToken firstTokenForChannelSelector = currentToken;
 			match(COLON);
+			if (currentToken.kind() == Kind.EOF) {
+				throw new SyntaxException();
+			}
 			IToken colorToken = currentToken;
 			match(colorToken.kind());
 			channelSelector = new ChannelSelector(firstTokenForChannelSelector, colorToken);
