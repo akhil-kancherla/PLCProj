@@ -118,29 +118,43 @@ public class CodeGenVisitor implements ASTVisitor {
             if (pixelSelector == null && channelSelector == null) {
                 if (exprType == Type.IMAGE) {
                     if (assignmentStatement.getE().firstToken().kind() == Kind.PLUS) {
-                        return "ImageOps.copyInto(" + assignmentStatement.getE().visit(this,arg) + ", " + assignmentStatement.getlValue().visit(this,arg) + ");";
+                        return "ImageOps.copyInto(" + assignmentStatement.getE().visit(this,arg)
+                                + ", " + assignmentStatement.getlValue().visit(this,arg) + ");";
                     }
                     else if (assignmentStatement.getE().firstToken().kind() == Kind.TIMES) {
-                        return "ImageOps.copyInto(" + assignmentStatement.getE().visit(this,arg) + ", " + assignmentStatement.getlValue().visit(this,arg) + ");";
+                        return "ImageOps.copyInto(" + assignmentStatement.getE().visit(this,arg)
+                                + ", " + assignmentStatement.getlValue().visit(this,arg) + ");";
                     }
                               //ImageOps.copyInto((ImageOps.binaryImageScalarOp(ImageOps.OP.DIV,(ImageOps.binaryImageImageOp(ImageOps.OP.PLUS,i$2,j$2)),2)),average$2);
                     else if (assignmentStatement.getE().firstToken().kind() == Kind.DIV) {
-                        return "ImageOps.copyInto(" + assignmentStatement.getE().visit(this,arg) + ", " + assignmentStatement.getlValue().visit(this,arg) + ");";
+                        return "ImageOps.copyInto(" + assignmentStatement.getE().visit(this,arg)
+                                + ", " + assignmentStatement.getlValue().visit(this,arg) + ");";
                     }
-                    return "ImageOps.copyInto(" + assignmentStatement.getE().visit(this,arg) + ", " + assignmentStatement.getlValue().visit(this,arg) + ");";
+                    return "ImageOps.copyInto(" + assignmentStatement.getE().visit(this,arg)
+                            + ", " + assignmentStatement.getlValue().visit(this,arg) + ");";
                 }
                 else if (exprType == Type.PIXEL) {
-                    return "ImageOps.setAllPixels(" + assignmentStatement.getlValue().visit(this,arg) + ", " + assignmentStatement.getE().visit(this, arg) + ");\n";
+                    return "ImageOps.setAllPixels(" + assignmentStatement.getlValue().visit(this,arg)
+                            + ", " + assignmentStatement.getE().visit(this, arg) + ");\n";
                 }
                 else if (exprType == Type.STRING) {
-                    return "ImageOps.copyInto((FileURLIO.readImage(" + assignmentStatement.getE().visit(this,arg) + "))," + assignmentStatement.getlValue().visit(this,arg) + ");\n";
+                    return "ImageOps.copyInto((FileURLIO.readImage(" + assignmentStatement.getE().visit(this,arg)
+                            + "))," + assignmentStatement.getlValue().visit(this,arg) + ");\n";
                 }
             }
             else if(pixelSelector != null && channelSelector == null){
                 String xexpr = (String) assignmentStatement.getlValue().getPixelSelector().xExpr().visit(this,arg);
                 String yexpr = (String) assignmentStatement.getlValue().getPixelSelector().yExpr().visit(this,arg);
                 System.out.println(assignmentStatement.getlValue().getPixelSelector().xExpr().visit(this,arg));
-                return "for (int " + xexpr + "=0; "+xexpr+"<" + assignmentStatement.getlValue().getNameDef().getJavaName()   + ".getWidth();\n"+ xexpr +"++){" + "for (int " + yexpr + "=0; "+ yexpr +"<" + assignmentStatement.getlValue().getNameDef().getJavaName() + ".getHeight();\n"+ yexpr + "++){\n" + "ImageOps.setRGB(" + assignmentStatement.getlValue().getNameDef().visit(this,arg) + "," + xexpr+","+ yexpr+"," + assignmentStatement.getE().visit(this,arg) + "); } };\n";
+                System.out.println("xexpr.charAt(2)=" + xexpr.charAt(2) + "\nassignmentStatement.getlValue().getNameDef().getJavaName().charAt(2)="+assignmentStatement.getlValue().getNameDef().getJavaName().charAt(2));
+                if (xexpr.charAt(2) < assignmentStatement.getlValue().getNameDef().getJavaName().charAt(2)) {
+                    return "ImageOps.setRGB(" + assignmentStatement.getlValue().getNameDef().visit(this,arg) + "," + xexpr+","+ yexpr+","
+                            + assignmentStatement.getE().visit(this,arg) + ");\n";
+                }
+                return "for (int " + xexpr + "=0; "+xexpr+"<" + assignmentStatement.getlValue().getNameDef().getJavaName() + ".getWidth();\n"+ xexpr +"++){"
+                        + "for (int " + yexpr + "=0; "+ yexpr +"<" + assignmentStatement.getlValue().getNameDef().getJavaName() + ".getHeight();\n"+ yexpr
+                        + "++){\n" + "ImageOps.setRGB(" + assignmentStatement.getlValue().getNameDef().visit(this,arg) + "," + xexpr+","+ yexpr+","
+                        + assignmentStatement.getE().visit(this,arg) + "); } };\n";
             }
             else if (channelSelector != null) {
                 throw new UnsupportedOperationException("Null channelSelector in assignmentStatement");
@@ -164,7 +178,8 @@ public class CodeGenVisitor implements ASTVisitor {
         System.out.println(assignmentStatement.getlValue().getType());
         System.out.println(assignmentStatement.getE().getType());
         if (assignmentStatement.getlValue().getType() == Type.PIXEL && assignmentStatement.getE().getType() == Type.INT) {
-            return assignmentStatement.getlValue().visit(this, arg) + " = " + "PixelOps.pack(" + pixStatement + ", " + pixStatement + ", " + pixStatement + ");\n";
+            return assignmentStatement.getlValue().visit(this, arg) + " = " + "PixelOps.pack(" + pixStatement + ", "
+                    + pixStatement + ", " + pixStatement + ");\n";
         }
 
         return varName + " = " + exprCode + ";\n";
@@ -344,25 +359,31 @@ public class CodeGenVisitor implements ASTVisitor {
         String varInitialization = "";
         if (varType == Type.IMAGE) {
             if (declaration.getInitializer() == null){
-                return "final BufferedImage " + declaration.getNameDef().getJavaName() + " = " + "ImageOps.makeImage(" + declaration.getNameDef().getDimension().visit(this, arg) + ");\n";
+                return "final BufferedImage " + declaration.getNameDef().getJavaName() + " = " + "ImageOps.makeImage(" +
+                        declaration.getNameDef().getDimension().visit(this, arg) + ");\n";
             }
             if (declaration.getInitializer() != null && declaration.getInitializer().getType() == Type.STRING) {
                 if (declaration.getNameDef().getDimension() != null) {
-                    return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" + "FileURLIO.readImage(" + declaration.getInitializer().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getWidth().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getHeight().visit(this, arg) + ");\n";
+                    return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" + "FileURLIO.readImage(" +
+                            declaration.getInitializer().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getWidth().visit(this, arg)
+                            + ", " + declaration.getNameDef().getDimension().getHeight().visit(this, arg) + ");\n";
                 }
                 return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" +"FileURLIO.readImage(" + declaration.getInitializer().visit(this, arg) + ");\n";
             }
             if (declaration.getInitializer() != null && declaration.getInitializer().getType() == Type.IMAGE) {
                 if (declaration.getNameDef().getDimension() != null) {
-                    return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" + "ImageOps.copyAndResize(" + declaration.getInitializer().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getWidth().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getHeight().visit(this, arg) + ");\n";
+                    return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" + "ImageOps.copyAndResize(" + declaration.getInitializer().visit(this, arg)
+                            + ", " + declaration.getNameDef().getDimension().getWidth().visit(this, arg) + ", " + declaration.getNameDef().getDimension().getHeight().visit(this, arg) + ");\n";
                 } else if(declaration.getNameDef().getDimension() == null){
                     if (declaration.getInitializer().visit(this, arg).toString().contains("+")) {
-                        return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" + "ImageOps.cloneImage((ImageOps.binaryImageImageOp(ImageOps.OP.PLUS," + declaration.getInitializer().visit(this, arg).toString().replace('+', ',').replace("(", "").replace(")", "") + ")));\n";
+                        return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" + "ImageOps.cloneImage((ImageOps.binaryImageImageOp(ImageOps.OP.PLUS," +
+                                declaration.getInitializer().visit(this, arg).toString().replace('+', ',').replace("(", "").replace(")", "") + ")));\n";
                     }
                     return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" + "ImageOps.cloneImage(" + declaration.getInitializer().visit(this, arg) + ");\n";
                 }
                 //System.out.println(declaration.getNameDef().g.visit(this,arg));
-                return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" + "ImageOps.cloneImage((ImageOps.binaryImageImageOp(ImageOps.OP.PLUS," + declaration.getInitializer().visit(this,arg) + ")));\n";
+                return "BufferedImage " + declaration.getNameDef().getJavaName() + "=" + "ImageOps.cloneImage((ImageOps.binaryImageImageOp(ImageOps.OP.PLUS," +
+                        declaration.getInitializer().visit(this,arg) + ")));\n";
             }
 
         }
@@ -507,9 +528,12 @@ public class CodeGenVisitor implements ASTVisitor {
             int color = (int) channelSelector.visit(this, arg);
 
             switch (color) {
-                case 0 -> sb.append("PixelOps.red(ImageOps.getRGB(" + expr.visit(this,arg) + "," + postfixExpr.pixel().xExpr().visit(this,arg)+","+ postfixExpr.pixel().yExpr().visit(this,arg));
-                case 1 -> sb.append("PixelOps.green(ImageOps.getRGB(" + expr.visit(this,arg) + "," + postfixExpr.pixel().xExpr().visit(this,arg)+","+ postfixExpr.pixel().yExpr().visit(this,arg));
-                case 2 -> sb.append("PixelOps.blue(ImageOps.getRGB(" + expr.visit(this,arg) + "," + postfixExpr.pixel().xExpr().visit(this,arg)+","+ postfixExpr.pixel().yExpr().visit(this,arg));
+                case 0 -> sb.append("PixelOps.red(ImageOps.getRGB(" + expr.visit(this,arg) + ","
+                        + postfixExpr.pixel().xExpr().visit(this,arg)+","+ postfixExpr.pixel().yExpr().visit(this,arg));
+                case 1 -> sb.append("PixelOps.green(ImageOps.getRGB(" + expr.visit(this,arg) + ","
+                        + postfixExpr.pixel().xExpr().visit(this,arg)+","+ postfixExpr.pixel().yExpr().visit(this,arg));
+                case 2 -> sb.append("PixelOps.blue(ImageOps.getRGB(" + expr.visit(this,arg) + ","
+                        + postfixExpr.pixel().xExpr().visit(this,arg)+","+ postfixExpr.pixel().yExpr().visit(this,arg));
             }
             String exprStr = (String) expr.visit(this, arg);
             //sb.append(exprStr);
